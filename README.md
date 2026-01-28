@@ -1,10 +1,11 @@
 # Chess Explorer
 
-A Django application for ingesting and storing chess games from various formats, built with SOLID principles for extensibility.
+A Django application for ingesting, analyzing, and exploring chess games. Built with SOLID principles for extensibility.
 
 ## Features
 
 - Import chess games from PGN files
+- Automatic opening detection using ECO (Encyclopedia of Chess Openings) classification
 - Store games in PostgreSQL (or SQLite for development)
 - Extensible parser architecture for adding new formats
 - Django admin interface for browsing games
@@ -51,6 +52,39 @@ flowchart TB
 - **Interface Segregation**: Small protocols (`GameParser`) - parsers don't need to know about Django
 - **Dependency Inversion**: Parsers produce plain dataclasses, not Django models - core parsing logic is framework-agnostic
 
+## Opening Detection
+
+Games are automatically classified using the Encyclopedia of Chess Openings (ECO) system. The detector replays each game's moves and matches positions against ~15,800 known opening positions.
+
+### How It Works
+
+1. ECO data is loaded from JSON files into the `Opening` table
+2. When importing games, each position is checked against known openings
+3. The deepest (most specific) matching opening is assigned to the game
+
+### ECO Classification
+
+- **A00-A99**: Flank openings (English, Reti, Bird)
+- **B00-B99**: Semi-open games (Sicilian, Caro-Kann, Pirc)
+- **C00-C99**: Open games (Italian, Ruy Lopez, French)
+- **D00-D99**: Closed games (Queen's Gambit)
+- **E00-E99**: Indian defenses (King's Indian, Nimzo-Indian)
+
+### Data Model
+
+```python
+class Opening(models.Model):
+    fen = models.CharField(unique=True)      # Position identifier
+    eco_code = models.CharField()            # e.g., "B33"
+    name = models.CharField()                # e.g., "Sicilian: Sveshnikov"
+    moves = models.CharField()               # e.g., "1. e4 c5 2. Nf3 Nc6..."
+    ply_count = models.IntegerField()        # Depth in half-moves
+
+class Game(models.Model):
+    opening = models.ForeignKey(Opening)     # Detected opening
+    # ... other fields
+```
+
 ## Installation
 
 Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/).
@@ -92,10 +126,20 @@ export DJANGO_SECRET_KEY=your-secure-secret-key
 
 ## Usage
 
+### Initial Setup
+
+```bash
+# Run migrations
+uv run python manage.py migrate
+
+# Load ECO opening database (~15,800 positions)
+uv run python manage.py load_openings
+```
+
 ### Import Games
 
 ```bash
-# Import a PGN file
+# Import a PGN file (openings detected automatically)
 uv run python manage.py import_games games.pgn
 
 # Import with explicit format
@@ -103,6 +147,21 @@ uv run python manage.py import_games data.json --format lichess
 
 # Specify batch size
 uv run python manage.py import_games large_file.pgn --batch-size 500
+```
+
+### Backfill Openings
+
+For games imported before opening detection was enabled:
+
+```bash
+# Detect openings for games without them
+uv run python manage.py detect_openings
+
+# Re-detect all games (force mode)
+uv run python manage.py detect_openings --force
+
+# Specify batch size
+uv run python manage.py detect_openings --batch-size 500
 ```
 
 ### Admin Interface
@@ -128,14 +187,25 @@ chess-explorer/
 │   ├── urls.py
 │   └── wsgi.py
 └── games/                   # Django app
-    ├── models.py            # Game model
+    ├── models.py            # Game and Opening models
     ├── admin.py             # Admin interface
     ├── repositories.py      # GameRepository
     ├── parsers/
     │   ├── base.py          # GameParser protocol + GameData
     │   └── pgn.py           # PGN parser
+    ├── services/
+    │   └── openings.py      # OpeningDetector service
+    ├── data/                # ECO opening data (JSON)
+    │   ├── ecoA.json
+    │   ├── ecoB.json
+    │   ├── ecoC.json
+    │   ├── ecoD.json
+    │   ├── ecoE.json
+    │   └── eco_interpolated.json
     └── management/commands/
-        └── import_games.py  # CLI command
+        ├── import_games.py    # Import games from files
+        ├── load_openings.py   # Load ECO data into database
+        └── detect_openings.py # Backfill openings for existing games
 ```
 
 ## Adding New Formats
@@ -190,4 +260,4 @@ uv run python manage.py test
 
 ## License
 
-[Add your license here]
+MIT
