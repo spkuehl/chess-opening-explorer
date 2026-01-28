@@ -23,5 +23,5 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "chess_explorer.settings"
 python_files = ["test_*.py", "*_test.py"]
-addopts = "--cov=games --cov-report=term-missing"
-testpaths = ["games/tests"]
+addopts = "--cov=chess_core --cov-report=term-missing"
+testpaths = ["chess_core/tests"]

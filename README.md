@@ -173,7 +173,7 @@ uv run python manage.py createsuperuser
 # Start development server
 uv run python manage.py runserver
 
-# Visit http://localhost:8000/admin/games/game/
+# Visit http://localhost:8000/admin/chess_core/game/
 ```
 
 ## Project Structure
@@ -186,7 +186,7 @@ chess-explorer/
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
-└── games/                   # Django app
+└── chess_core/                   # Django app
     ├── models.py            # Game and Opening models
     ├── admin.py             # Admin interface
     ├── repositories.py      # GameRepository
@@ -212,10 +212,10 @@ chess-explorer/
 
 To add support for a new format (e.g., Lichess JSON):
 
-1. Create a new parser in `games/parsers/`:
+1. Create a new parser in `chess_core/parsers/`:
 
 ```python
-# games/parsers/lichess.py
+# chess_core/parsers/lichess.py
 from pathlib import Path
 from typing import Iterator
 from .base import GameData
@@ -226,7 +226,7 @@ class LichessParser:
         ...
 ```
 
-2. Register the parser in `games/management/commands/import_games.py`:
+2. Register the parser in `chess_core/management/commands/import_games.py`:
 
 ```python
 def _get_parser(self, file_format: str):

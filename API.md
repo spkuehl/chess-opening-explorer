@@ -127,25 +127,25 @@ The API follows SOLID principles with clean layer separation:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      API Layer                               │
-│  games/api/router.py - Thin controllers, request handling   │
+│  chess_core/api/router.py - Thin controllers, request handling   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Schema Layer                              │
-│  games/api/schemas.py - Pydantic models for validation      │
+│  chess_core/api/schemas.py - Pydantic models for validation      │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   Service Layer                              │
-│  games/services/opening_stats.py - Business logic           │
+│  chess_core/services/opening_stats.py - Business logic           │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Data Layer                                │
-│  games/models.py - Django ORM models                        │
+│  chess_core/models.py - Django ORM models                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -176,7 +176,7 @@ The API uses URL-based versioning (`/api/v1/`). Future breaking changes will be 
 
 Planned endpoints for future releases:
 
-- `GET /api/v1/games/` - List/search games with pagination
-- `GET /api/v1/games/{id}/` - Get single game details with moves
+- `GET /api/v1/chess_core/` - List/search games with pagination
+- `GET /api/v1/chess_core/{id}/` - Get single game details with moves
 - `GET /api/v1/players/stats/` - Player statistics (win rates, opening preferences)
-- `POST /api/v1/games/upload/` - Upload PGN games
+- `POST /api/v1/chess_core/upload/` - Upload PGN games
