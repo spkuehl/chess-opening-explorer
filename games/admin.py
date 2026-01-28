@@ -10,6 +10,7 @@ class GameAdmin(admin.ModelAdmin):
     """Admin interface for Game model."""
 
     list_display = [
+        "id",
         "white_player",
         "black_player",
         "result",
@@ -18,6 +19,7 @@ class GameAdmin(admin.ModelAdmin):
         "white_elo",
         "black_elo",
     ]
+    list_display_links = ["id"]
     list_filter = ["event", "result", "source_format", "date"]
     search_fields = ["white_player", "black_player", "event"]
     date_hierarchy = "date"
