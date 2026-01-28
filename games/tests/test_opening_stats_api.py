@@ -141,8 +141,8 @@ class TestOpeningStatsEndpoint:
         assert sicilian["white_wins"] == 3
         assert sicilian["draws"] == 1
         assert sicilian["black_wins"] == 1
-        # Avg moves: (40+40+40+50+35) / 5 = 41.0
-        assert sicilian["avg_moves"] == 41.0
+        # Avg moves: (40+40+40+50+35) / 5 / 2 = 20.5
+        assert sicilian["avg_moves"] == 20.5
 
     def test_empty_results_returns_empty_list(self, api_client: Client, db):
         """Edge case: no data returns empty items list."""

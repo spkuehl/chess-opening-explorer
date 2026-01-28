@@ -164,8 +164,8 @@ class TestOpeningStatsServiceAggregation:
             r for r in results if r["opening__eco_code"] == "B20"
         )
 
-        # Sicilian move counts: 40, 41, 42, 50, 51, 35 = 259 / 6 = 43.166...
-        expected_avg = (40 + 41 + 42 + 50 + 51 + 35) / 6
+        # Sicilian ply counts: 40, 41, 42, 50, 51, 35 = 259 / 6 / 2 = 21.583...
+        expected_avg = (40 + 41 + 42 + 50 + 51 + 35) / 6 / 2
         assert abs(sicilian_stats["avg_moves"] - expected_avg) < 0.01
 
     def test_excludes_games_without_opening(self, db, opening_sicilian: Opening):
