@@ -40,6 +40,16 @@ def opening_caro_kann(db) -> Opening:
 
 
 @pytest.fixture
+def opening_zukertort(db) -> Opening:
+    """Create Zukertort opening used for name filter tests."""
+    return OpeningFactory(
+        eco_code="A04",
+        name="Zukertort Opening: Arctic",
+        fen="rnbqkbnr/pppppppp/8/8/NP6/8/P1PPPPPP/R1BQKBNR b KQkq - 0 1",
+    )
+
+
+@pytest.fixture
 def games_with_openings(
     db, opening_sicilian: Opening, opening_french: Opening
 ) -> list[Game]:
@@ -499,6 +509,26 @@ class TestOpeningStatsServiceOpeningFilters:
 
         assert len(results) == 1
         assert results[0]["opening__eco_code"] == "B20"
+
+    def test_filter_opening_name_contains_phrase(
+        self,
+        db,
+        opening_zukertort: Opening,
+        opening_sicilian: Opening,
+    ):
+        """Filter by opening_name uses case-insensitive contains match."""
+        GameFactory(opening=opening_zukertort, result="1-0", move_count_ply=40)
+        GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
+
+        service = OpeningStatsService()
+        filters = OpeningStatsFilterParams(
+            opening_name="Zukertort Opening: Arctic",
+        )
+
+        results = list(service.get_stats(filters))
+
+        assert len(results) == 1
+        assert results[0]["opening__name"] == "Zukertort Opening: Arctic"
 
 
 @pytest.mark.django_db

@@ -41,6 +41,7 @@ Returns aggregated statistics for chess openings including game counts, win/draw
 | `black_player` | string | - | Filter games where black player name contains this value (case-insensitive) |
 | `any_player` | string | - | Filter games where either player contains this value (OR condition). Takes precedence over `white_player`/`black_player` |
 | `eco_code` | string | - | Filter by exact ECO code (e.g. `B20`) |
+| `opening_name` | string | - | Filter openings whose name contains this text (case-insensitive) |
 | `date_from` | date | - | Lower bound for game date (inclusive, format: YYYY-MM-DD) |
 | `date_to` | date | - | Upper bound for game date (inclusive, format: YYYY-MM-DD) |
 | `white_elo_min` | integer | - | Minimum white player ELO |
@@ -101,6 +102,9 @@ curl "http://localhost:8000/api/v1/openings/stats/?threshold=10"
 
 # Filter by ECO code
 curl "http://localhost:8000/api/v1/openings/stats/?eco_code=B20"
+
+# Filter by opening name (substring match)
+curl "http://localhost:8000/api/v1/openings/stats/?opening_name=Zukertort%20Opening:%20Arctic"
 
 # Combined filters
 curl "http://localhost:8000/api/v1/openings/stats/?white_player=Nakamura&date_from=2024-01-01&threshold=5"

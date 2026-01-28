@@ -24,8 +24,8 @@ api = NinjaAPI(
     description=(
         "Returns aggregated statistics for chess openings including game counts, "
         "win/draw/loss distribution, and average move counts. Results can be "
-        "filtered by player, ECO code, date range, ELO range, and minimum game "
-        "threshold."
+        "filtered by player, ECO code, opening name, date range, ELO range, and "
+        "minimum game threshold."
     ),
     tags=["openings"],
 )
@@ -50,6 +50,7 @@ def get_opening_stats(
         black_player=filters.black_player,
         any_player=filters.any_player,
         eco_code=filters.eco_code,
+        opening_name=filters.opening_name,
         date_from=filters.date_from,
         date_to=filters.date_to,
         white_elo_min=filters.white_elo_min,

@@ -21,6 +21,8 @@ class OpeningStatsFilterParams:
         any_player: Filter games where either player contains value (OR).
             Takes precedence over white_player/black_player if provided.
         eco_code: Filter by exact ECO code (e.g. "B20").
+        opening_name: Filter openings whose name contains the given text
+            (case-insensitive).
         date_from: Lower bound for game date (inclusive).
         date_to: Upper bound for game date (inclusive).
         white_elo_min: Minimum white player ELO.
@@ -35,6 +37,7 @@ class OpeningStatsFilterParams:
     black_player: str | None = None
     any_player: str | None = None
     eco_code: str | None = None
+    opening_name: str | None = None
     date_from: date | None = None
     date_to: date | None = None
     white_elo_min: int | None = None
@@ -119,9 +122,11 @@ class OpeningStatsService:
     def _apply_opening_filters(
         self, qs: QuerySet, filters: OpeningStatsFilterParams
     ) -> QuerySet:
-        """Apply opening-based filters such as ECO code."""
+        """Apply opening-based filters such as ECO code and name."""
         if filters.eco_code:
             qs = qs.filter(opening__eco_code=filters.eco_code)
+        if filters.opening_name:
+            qs = qs.filter(opening__name__icontains=filters.opening_name)
         return qs
 
     def _apply_date_filters(

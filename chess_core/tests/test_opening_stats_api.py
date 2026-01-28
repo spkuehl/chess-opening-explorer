@@ -32,6 +32,15 @@ def opening_french(db) -> Opening:
 
 
 @pytest.fixture
+def opening_zukertort(db) -> Opening:
+    """Create Zukertort opening used for name filter tests."""
+    return OpeningFactory(
+        eco_code="A04",
+        name="Zukertort Opening: Arctic",
+    )
+
+
+@pytest.fixture
 def sample_games(
     db, opening_sicilian: Opening, opening_french: Opening
 ) -> list[Game]:
@@ -236,6 +245,25 @@ class TestOpeningStatsFilterParams:
         data = response.json()
         assert data["total"] == 1
         assert data["items"][0]["eco_code"] == "B20"
+
+    def test_filter_opening_name_contains_phrase(
+        self,
+        api_client: Client,
+        db,
+        opening_zukertort: Opening,
+        opening_sicilian: Opening,
+    ):
+        """Filter by opening_name uses case-insensitive contains match."""
+        GameFactory(opening=opening_zukertort, result="1-0", move_count_ply=40)
+        GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
+
+        response = api_client.get(
+            "/api/v1/openings/stats/?opening_name=Zukertort%20Opening:%20Arctic"
+        )
+
+        data = response.json()
+        assert data["total"] == 1
+        assert data["items"][0]["name"] == "Zukertort Opening: Arctic"
 
 
 @pytest.mark.django_db

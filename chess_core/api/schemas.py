@@ -52,6 +52,8 @@ class OpeningStatsFilterSchema(Schema):
         any_player: Filter games where either player contains value (OR).
             Takes precedence over white_player/black_player if provided.
         eco_code: Filter by exact ECO code (e.g. "B20").
+        opening_name: Filter openings whose name contains the given text
+            (case-insensitive).
         date_from: Lower bound for game date (inclusive).
         date_to: Upper bound for game date (inclusive).
         white_elo_min: Minimum white player ELO.
@@ -66,6 +68,7 @@ class OpeningStatsFilterSchema(Schema):
     black_player: str | None = None
     any_player: str | None = None
     eco_code: str | None = None
+    opening_name: str | None = None
     date_from: date | None = None
     date_to: date | None = None
     white_elo_min: int | None = None
