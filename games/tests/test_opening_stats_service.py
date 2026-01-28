@@ -54,7 +54,7 @@ def games_with_openings(
                 result="1-0",
                 white_player="Magnus Carlsen",
                 black_player="Hikaru Nakamura",
-                move_count=40 + i,
+                move_count_ply=40 + i,
                 white_elo=2800,
                 black_elo=2750,
             )
@@ -66,7 +66,7 @@ def games_with_openings(
                 result="1/2-1/2",
                 white_player="Fabiano Caruana",
                 black_player="Ding Liren",
-                move_count=50 + i,
+                move_count_ply=50 + i,
                 white_elo=2780,
                 black_elo=2790,
             )
@@ -77,7 +77,7 @@ def games_with_openings(
             result="0-1",
             white_player="Ian Nepomniachtchi",
             black_player="Magnus Carlsen",
-            move_count=35,
+            move_count_ply=35,
             white_elo=2760,
             black_elo=2800,
         )
@@ -91,7 +91,7 @@ def games_with_openings(
                 result="1-0",
                 white_player="Anish Giri",
                 black_player="Wesley So",
-                move_count=30 + i,
+                move_count_ply=30 + i,
                 white_elo=2760,
                 black_elo=2770,
             )
@@ -102,7 +102,7 @@ def games_with_openings(
             result="1/2-1/2",
             white_player="Levon Aronian",
             black_player="Maxime Vachier-Lagrave",
-            move_count=45,
+            move_count_ply=45,
             white_elo=2750,
             black_elo=2740,
         )
@@ -171,9 +171,9 @@ class TestOpeningStatsServiceAggregation:
     def test_excludes_games_without_opening(self, db, opening_sicilian: Opening):
         """Games with null opening are excluded from stats."""
         # Create game with opening
-        GameFactory(opening=opening_sicilian, result="1-0", move_count=40)
+        GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
         # Create game without opening
-        GameFactory(opening=None, result="1-0", move_count=40)
+        GameFactory(opening=None, result="1-0", move_count_ply=40)
 
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
@@ -218,14 +218,14 @@ class TestOpeningStatsServicePlayerFilters:
             white_player="Magnus Carlsen",
             black_player="Other",
             result="1-0",
-            move_count=40,
+            move_count_ply=40,
         )
         GameFactory(
             opening=opening_sicilian,
             white_player="Hikaru Nakamura",
             black_player="Other",
             result="0-1",
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -244,14 +244,14 @@ class TestOpeningStatsServicePlayerFilters:
             white_player="Other",
             black_player="Magnus Carlsen",
             result="0-1",
-            move_count=40,
+            move_count_ply=40,
         )
         GameFactory(
             opening=opening_sicilian,
             white_player="Other",
             black_player="Hikaru Nakamura",
             result="1-0",
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -270,21 +270,21 @@ class TestOpeningStatsServicePlayerFilters:
             white_player="Magnus Carlsen",
             black_player="Hikaru Nakamura",
             result="1-0",
-            move_count=40,
+            move_count_ply=40,
         )
         GameFactory(
             opening=opening_sicilian,
             white_player="Fabiano Caruana",
             black_player="Magnus Carlsen",
             result="0-1",
-            move_count=35,
+            move_count_ply=35,
         )
         GameFactory(
             opening=opening_sicilian,
             white_player="Other Player",
             black_player="Another Player",
             result="1/2-1/2",
-            move_count=50,
+            move_count_ply=50,
         )
 
         service = OpeningStatsService()
@@ -304,7 +304,7 @@ class TestOpeningStatsServicePlayerFilters:
             white_player="Magnus Carlsen",
             black_player="Hikaru Nakamura",
             result="1-0",
-            move_count=40,
+            move_count_ply=40,
         )
 
         service = OpeningStatsService()
@@ -332,14 +332,14 @@ class TestOpeningStatsServiceDateFilters:
             opening=opening_sicilian,
             date=date(2024, 6, 15),
             result="1-0",
-            move_count=40,
+            move_count_ply=40,
         )
         # Create game from 2023
         GameFactory(
             opening=opening_sicilian,
             date=date(2023, 3, 10),
             result="0-1",
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -363,14 +363,14 @@ class TestOpeningStatsServiceDateFilters:
             opening=opening_sicilian,
             date=date(2024, 6, 15),
             result="1-0",
-            move_count=40,
+            move_count_ply=40,
         )
         # Create game from 2023
         GameFactory(
             opening=opening_sicilian,
             date=date(2023, 3, 10),
             result="0-1",
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -399,7 +399,7 @@ class TestOpeningStatsServiceEloFilters:
             result="1-0",
             white_elo=2800,
             black_elo=2750,
-            move_count=40,
+            move_count_ply=40,
         )
         # Lower ELO game
         GameFactory(
@@ -407,7 +407,7 @@ class TestOpeningStatsServiceEloFilters:
             result="0-1",
             white_elo=2400,
             black_elo=2350,
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -428,14 +428,14 @@ class TestOpeningStatsServiceEloFilters:
             result="1-0",
             white_elo=2500,
             black_elo=2800,
-            move_count=40,
+            move_count_ply=40,
         )
         GameFactory(
             opening=opening_sicilian,
             result="0-1",
             white_elo=2500,
             black_elo=2400,
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -456,14 +456,14 @@ class TestOpeningStatsServiceEloFilters:
             result="1-0",
             white_elo=2800,
             black_elo=2750,
-            move_count=40,
+            move_count_ply=40,
         )
         GameFactory(
             opening=opening_sicilian,
             result="0-1",
             white_elo=2400,
             black_elo=2350,
-            move_count=35,
+            move_count_ply=35,
         )
 
         service = OpeningStatsService()
@@ -488,11 +488,11 @@ class TestOpeningStatsServiceThreshold:
         """Openings below threshold are excluded from results."""
         # 5 Sicilian games
         for _ in range(5):
-            GameFactory(opening=opening_sicilian, result="1-0", move_count=40)
+            GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
 
         # 2 French games
         for _ in range(2):
-            GameFactory(opening=opening_french, result="1-0", move_count=35)
+            GameFactory(opening=opening_french, result="1-0", move_count_ply=35)
 
         service = OpeningStatsService()
 
@@ -510,8 +510,8 @@ class TestOpeningStatsServiceThreshold:
         self, db, opening_sicilian: Opening, opening_french: Opening
     ):
         """Default threshold of 1 includes all openings with at least 1 game."""
-        GameFactory(opening=opening_sicilian, result="1-0", move_count=40)
-        GameFactory(opening=opening_french, result="1-0", move_count=35)
+        GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
+        GameFactory(opening=opening_french, result="1-0", move_count_ply=35)
 
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()  # Default threshold=1
@@ -524,7 +524,7 @@ class TestOpeningStatsServiceThreshold:
         self, db, opening_sicilian: Opening
     ):
         """Threshold of 0 includes all openings."""
-        GameFactory(opening=opening_sicilian, result="1-0", move_count=40)
+        GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
 
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams(threshold=0)

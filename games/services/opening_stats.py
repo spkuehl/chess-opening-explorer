@@ -151,7 +151,7 @@ class OpeningStatsService:
             white_wins=Count("id", filter=Q(result="1-0")),
             draws=Count("id", filter=Q(result="1/2-1/2")),
             black_wins=Count("id", filter=Q(result="0-1")),
-            avg_moves=Avg("move_count"),
+            avg_moves=Avg("move_count_ply"),
         )
 
     def _apply_threshold(self, qs: QuerySet, threshold: int) -> QuerySet:

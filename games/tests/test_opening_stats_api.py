@@ -46,7 +46,7 @@ def sample_games(
                 result="1-0",
                 white_player="Magnus Carlsen",
                 black_player="Hikaru Nakamura",
-                move_count=40,
+                move_count_ply=40,
                 white_elo=2800,
                 black_elo=2750,
             )
@@ -57,7 +57,7 @@ def sample_games(
             result="1/2-1/2",
             white_player="Fabiano Caruana",
             black_player="Ding Liren",
-            move_count=50,
+            move_count_ply=50,
             white_elo=2780,
             black_elo=2790,
         )
@@ -68,7 +68,7 @@ def sample_games(
             result="0-1",
             white_player="Ian Nepomniachtchi",
             black_player="Magnus Carlsen",
-            move_count=35,
+            move_count_ply=35,
             white_elo=2760,
             black_elo=2800,
         )
@@ -82,7 +82,7 @@ def sample_games(
                 result="1-0",
                 white_player="Anish Giri",
                 black_player="Wesley So",
-                move_count=30,
+                move_count_ply=30,
                 white_elo=2760,
                 black_elo=2770,
             )

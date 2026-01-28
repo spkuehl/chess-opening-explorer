@@ -166,7 +166,7 @@ The API follows SOLID principles with clean layer separation:
 - **Database Indexes**: Filter fields are indexed for O(log n) lookups
 - **Single Query**: All aggregation happens in a single database query
 - **Lazy Evaluation**: QuerySets are evaluated lazily, allowing the database to optimize
-- **Move Count Caching**: `move_count` is stored on the `Game` model to avoid runtime calculation
+- **Move Count Caching**: `move_count_ply` is stored on the `Game` model to avoid runtime calculation
 
 ## Versioning
 

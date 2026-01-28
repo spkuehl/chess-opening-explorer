@@ -130,7 +130,7 @@ class GameRepository:
             "time_control": game_data.time_control or "",
             "termination": game_data.termination or "",
             "moves": game_data.moves,
-            "move_count": self._count_moves(game_data.moves),
+            "move_count_ply": self._count_moves(game_data.moves),
             "source_format": game_data.source_format,
             "raw_headers": game_data.raw_headers,
             "opening_id": opening_id,

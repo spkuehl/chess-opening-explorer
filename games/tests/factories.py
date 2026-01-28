@@ -42,7 +42,7 @@ class GameFactory(DjangoModelFactory):
     time_control = "300+0"
     termination = "Normal"
     moves = "1. e4 e5 2. Nf3 Nc6"
-    move_count = 4
+    move_count_ply = 4
     source_format = "pgn"
     raw_headers = factory.LazyFunction(dict)
     opening = None
