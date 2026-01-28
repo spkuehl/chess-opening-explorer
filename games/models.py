@@ -40,14 +40,15 @@ class Game(models.Model):
     white_player = models.CharField(max_length=255, db_index=True)
     black_player = models.CharField(max_length=255, db_index=True)
     result = models.CharField(max_length=10)
-    white_elo = models.IntegerField(null=True, blank=True)
-    black_elo = models.IntegerField(null=True, blank=True)
+    white_elo = models.IntegerField(null=True, blank=True, db_index=True)
+    black_elo = models.IntegerField(null=True, blank=True, db_index=True)
     time_control = models.CharField(max_length=50, blank=True)
     termination = models.TextField(blank=True)
     moves = models.TextField()
     source_format = models.CharField(max_length=50)
     raw_headers = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    move_count = models.IntegerField(null=True, blank=True, db_index=True)
     opening = models.ForeignKey(
         Opening, null=True, blank=True, on_delete=models.SET_NULL, db_index=True
     )

@@ -130,10 +130,37 @@ class GameRepository:
             "time_control": game_data.time_control or "",
             "termination": game_data.termination or "",
             "moves": game_data.moves,
+            "move_count": self._count_moves(game_data.moves),
             "source_format": game_data.source_format,
             "raw_headers": game_data.raw_headers,
             "opening_id": opening_id,
         }
+
+    def _count_moves(self, moves: str) -> int | None:
+        """Count the number of half-moves (ply) in a move string.
+
+        Args:
+            moves: A move string in SAN format, e.g., "1. e4 e5 2. Nf3 Nc6".
+
+        Returns:
+            The number of half-moves (ply), or None if moves is empty.
+        """
+        if not moves:
+            return None
+
+        tokens = moves.split()
+        move_count = 0
+
+        for token in tokens:
+            # Skip move numbers (e.g., "1.", "2.", "1...")
+            if token.endswith(".") or token.replace(".", "").isdigit():
+                continue
+            # Skip result markers
+            if token in ("1-0", "0-1", "1/2-1/2", "*"):
+                continue
+            move_count += 1
+
+        return move_count if move_count > 0 else None
 
     def _flush_batch(self, batch: list[Game]) -> None:
         """Write a batch of games to the database.
