@@ -42,8 +42,9 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
+                "db_table": "game",
                 "indexes": [
-                    models.Index(fields=["event"], name="games_game_event_833326_idx")
+                    models.Index(fields=["event"], name="game_event_738748_idx")
                 ],
             },
         ),

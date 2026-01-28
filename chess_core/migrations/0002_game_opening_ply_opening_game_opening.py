@@ -36,11 +36,12 @@ class Migration(migrations.Migration):
                 ("is_eco_root", models.BooleanField(default=False)),
             ],
             options={
+                "db_table": "opening",
                 "indexes": [
                     models.Index(
-                        fields=["eco_code"], name="games_openi_eco_cod_631471_idx"
+                        fields=["eco_code"], name="opening_eco_cod_e5185e_idx"
                     ),
-                    models.Index(fields=["name"], name="games_openi_name_11fa0c_idx"),
+                    models.Index(fields=["name"], name="opening_name_f617da_idx"),
                 ],
             },
         ),

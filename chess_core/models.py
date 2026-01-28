@@ -19,6 +19,7 @@ class Opening(models.Model):
     is_eco_root = models.BooleanField(default=False)
 
     class Meta:
+        db_table = "opening"
         indexes = [
             models.Index(fields=["eco_code"]),
             models.Index(fields=["name"]),
@@ -54,6 +55,7 @@ class Game(models.Model):
     )
 
     class Meta:
+        db_table = "game"
         indexes = [
             models.Index(fields=["event"]),
         ]
