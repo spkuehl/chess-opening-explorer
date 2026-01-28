@@ -4,14 +4,19 @@ This module provides a parser for PGN (Portable Game Notation) files,
 the standard format for recording chess games.
 """
 
+from __future__ import annotations
+
 import hashlib
 from datetime import date
 from pathlib import Path
-from typing import Iterator
+from typing import TYPE_CHECKING, Iterator
 
 import chess.pgn
 
 from .base import GameData
+
+if TYPE_CHECKING:
+    from games.services.openings import OpeningDetector
 
 
 class PGNParser:
@@ -25,6 +30,14 @@ class PGNParser:
         >>> for game in parser.parse("tournament.pgn"):
         ...     print(f"{game.white_player} vs {game.black_player}: {game.result}")
     """
+
+    def __init__(self, opening_detector: OpeningDetector | None = None) -> None:
+        """Initialize the parser.
+
+        Args:
+            opening_detector: Optional detector to identify openings in games.
+        """
+        self._opening_detector = opening_detector
 
     def parse(self, source: Path | str) -> Iterator[GameData]:
         """Parse games from a PGN file.
@@ -78,6 +91,13 @@ class PGNParser:
         # Collect all raw headers
         raw_headers = dict(headers)
 
+        # Detect opening if detector is available
+        opening_fen = ""
+        if self._opening_detector:
+            match = self._opening_detector.detect_opening(moves)
+            if match:
+                opening_fen = match.fen
+
         return GameData(
             source_id=source_id,
             event=headers.get("Event", ""),
@@ -94,6 +114,7 @@ class PGNParser:
             moves=moves,
             source_format="pgn",
             raw_headers=raw_headers,
+            opening_fen=opening_fen,
         )
 
     def _generate_source_id(self, headers: chess.pgn.Headers) -> str:

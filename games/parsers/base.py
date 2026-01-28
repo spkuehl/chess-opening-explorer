@@ -35,6 +35,7 @@ class GameData:
         moves: The move text in standard notation.
         source_format: Format the game was parsed from (e.g., "pgn").
         raw_headers: All original headers preserved as key-value pairs.
+        opening_fen: FEN of the detected opening position (for FK lookup).
     """
 
     source_id: str
@@ -52,6 +53,7 @@ class GameData:
     moves: str
     source_format: str
     raw_headers: dict[str, str]
+    opening_fen: str = ""
 
 
 class GameParser(Protocol):

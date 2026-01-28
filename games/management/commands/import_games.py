@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from games.parsers import PGNParser
 from games.repositories import GameRepository
+from games.services.openings import OpeningDetector
 
 
 class Command(BaseCommand):
@@ -45,8 +46,13 @@ class Command(BaseCommand):
         if not file_path.exists():
             raise CommandError(f"File not found: {file_path}")
 
+        # Initialize opening detector
+        self.stdout.write("Loading opening database...")
+        opening_detector = OpeningDetector()
+        self.stdout.write(f"Loaded {len(opening_detector._fen_set)} opening positions")
+
         # Select parser based on format
-        parser = self._get_parser(file_format)
+        parser = self._get_parser(file_format, opening_detector)
         if parser is None:
             raise CommandError(f"Unsupported format: {file_format}")
 
@@ -79,19 +85,16 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"New games added: {new_games}"))
         self.stdout.write(self.style.SUCCESS(f"Total games in database: {final_count}"))
 
-    def _get_parser(self, file_format: str):
+    def _get_parser(self, file_format: str, opening_detector: OpeningDetector | None):
         """Get the appropriate parser for the file format.
 
         Args:
             file_format: The format string (e.g., "pgn").
+            opening_detector: Optional detector for opening identification.
 
         Returns:
             A parser instance or None if format is unsupported.
         """
-        parsers = {
-            "pgn": PGNParser,
-        }
-        parser_class = parsers.get(file_format)
-        if parser_class:
-            return parser_class()
+        if file_format == "pgn":
+            return PGNParser(opening_detector=opening_detector)
         return None

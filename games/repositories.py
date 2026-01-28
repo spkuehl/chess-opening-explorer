@@ -5,8 +5,9 @@ framework-agnostic GameData objects and Django ORM models.
 """
 
 from collections.abc import Iterable
+from typing import Any
 
-from .models import Game
+from .models import Game, Opening
 from .parsers.base import GameData
 
 
@@ -22,6 +23,13 @@ class GameRepository:
         >>> count = repo.save_batch(parser.parse("games.pgn"))
         >>> print(f"Imported {count} games")
     """
+
+    def __init__(self) -> None:
+        """Initialize the repository with opening FEN cache."""
+        # Pre-load FEN → Opening ID mapping for efficient bulk inserts
+        self._opening_cache: dict[str, int] = dict(
+            Opening.objects.values_list("fen", "id")
+        )
 
     def save(self, game_data: GameData) -> Game:
         """Save a single game, updating if source_id exists.
@@ -95,7 +103,7 @@ class GameRepository:
         """
         return Game.objects.count()
 
-    def _to_model_fields(self, game_data: GameData) -> dict:
+    def _to_model_fields(self, game_data: GameData) -> dict[str, Any]:
         """Convert GameData to a dictionary of model fields.
 
         Args:
@@ -104,6 +112,11 @@ class GameRepository:
         Returns:
             Dictionary of field names to values for the Game model.
         """
+        # Resolve opening FEN to Opening ID
+        opening_id = None
+        if game_data.opening_fen:
+            opening_id = self._opening_cache.get(game_data.opening_fen)
+
         return {
             "event": game_data.event,
             "site": game_data.site,
@@ -119,6 +132,7 @@ class GameRepository:
             "moves": game_data.moves,
             "source_format": game_data.source_format,
             "raw_headers": game_data.raw_headers,
+            "opening_id": opening_id,
         }
 
     def _flush_batch(self, batch: list[Game]) -> None:
