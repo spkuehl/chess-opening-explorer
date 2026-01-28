@@ -13,4 +13,14 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ruff>=0.14.14",
+    "pytest>=8.0",
+    "pytest-django>=4.8",
+    "pytest-cov>=4.1",
+    "factory-boy>=3.3",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "chess_explorer.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--cov=games --cov-report=term-missing"
+testpaths = ["games/tests"]
