@@ -20,18 +20,21 @@ class OpeningStatsFilterParams:
         black_player: Filter games where black player name contains value.
         any_player: Filter games where either player contains value (OR).
             Takes precedence over white_player/black_player if provided.
+        eco_code: Filter by exact ECO code (e.g. "B20").
         date_from: Lower bound for game date (inclusive).
         date_to: Upper bound for game date (inclusive).
         white_elo_min: Minimum white player ELO.
         white_elo_max: Maximum white player ELO.
         black_elo_min: Minimum black player ELO.
         black_elo_max: Maximum black player ELO.
-        threshold: Minimum game count required for opening to appear in results.
+        threshold: Minimum game count required for opening to appear in
+            results.
     """
 
     white_player: str | None = None
     black_player: str | None = None
     any_player: str | None = None
+    eco_code: str | None = None
     date_from: date | None = None
     date_to: date | None = None
     white_elo_min: int | None = None
@@ -88,6 +91,7 @@ class OpeningStatsService:
     ) -> QuerySet:
         """Apply all filter conditions to the query."""
         qs = self._apply_player_filters(qs, filters)
+        qs = self._apply_opening_filters(qs, filters)
         qs = self._apply_date_filters(qs, filters)
         qs = self._apply_elo_filters(qs, filters)
         return qs
@@ -110,6 +114,14 @@ class OpeningStatsService:
                 qs = qs.filter(white_player__icontains=filters.white_player)
             if filters.black_player:
                 qs = qs.filter(black_player__icontains=filters.black_player)
+        return qs
+
+    def _apply_opening_filters(
+        self, qs: QuerySet, filters: OpeningStatsFilterParams
+    ) -> QuerySet:
+        """Apply opening-based filters such as ECO code."""
+        if filters.eco_code:
+            qs = qs.filter(opening__eco_code=filters.eco_code)
         return qs
 
     def _apply_date_filters(

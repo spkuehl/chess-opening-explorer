@@ -227,6 +227,16 @@ class TestOpeningStatsFilterParams:
         assert data["total"] == 1
         assert data["items"][0]["game_count"] == 3
 
+    def test_filter_eco_code(
+        self, api_client: Client, sample_games: list[Game]
+    ):
+        """Filter by ECO code returns only that opening."""
+        response = api_client.get("/api/v1/openings/stats/?eco_code=B20")
+
+        data = response.json()
+        assert data["total"] == 1
+        assert data["items"][0]["eco_code"] == "B20"
+
 
 @pytest.mark.django_db
 class TestOpeningStatsValidation:

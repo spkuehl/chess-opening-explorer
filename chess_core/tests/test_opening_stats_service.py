@@ -479,6 +479,29 @@ class TestOpeningStatsServiceEloFilters:
 
 
 @pytest.mark.django_db
+class TestOpeningStatsServiceOpeningFilters:
+    """Tests for opening-based filters."""
+
+    def test_filter_eco_code(
+        self,
+        db,
+        opening_sicilian: Opening,
+        opening_french: Opening,
+    ):
+        """Filter by ECO code returns only the requested opening."""
+        GameFactory(opening=opening_sicilian, result="1-0", move_count_ply=40)
+        GameFactory(opening=opening_french, result="1-0", move_count_ply=35)
+
+        service = OpeningStatsService()
+        filters = OpeningStatsFilterParams(eco_code="B20")
+
+        results = list(service.get_stats(filters))
+
+        assert len(results) == 1
+        assert results[0]["opening__eco_code"] == "B20"
+
+
+@pytest.mark.django_db
 class TestOpeningStatsServiceThreshold:
     """Tests for threshold filtering."""
 
