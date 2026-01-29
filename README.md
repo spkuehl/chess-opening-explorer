@@ -9,40 +9,12 @@ A Django application for ingesting, analyzing, and exploring chess games. Built 
 - Store games in PostgreSQL (or SQLite for development)
 - Extensible parser architecture for adding new formats
 - Django admin interface for browsing games
+- API for fetching filtered data sets
 - Batch import with deduplication
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    subgraph sources [Data Sources]
-        PGN[PGN Files]
-        Future[Future: JSON APIs, etc.]
-    end
-    
-    subgraph parsers [Parser Layer]
-        PP[PGNParser]
-        FP[FutureParser]
-    end
-    
-    subgraph django [Django Layer]
-        Models[Django ORM Models]
-        Repo[GameRepository]
-        Cmds[Management Commands]
-    end
-    
-    subgraph storage [Storage]
-        DB[(PostgreSQL)]
-    end
-    
-    PGN --> PP
-    Future --> FP
-    PP --> Repo
-    FP --> Repo
-    Repo --> Models
-    Models --> DB
-    Cmds --> Repo
-```
+![Architecture Flow](images/architecture_overview_flow.png)
 
 ### SOLID Principles
 
@@ -61,6 +33,8 @@ Games are automatically classified using the Encyclopedia of Chess Openings (ECO
 1. ECO data is loaded from JSON files into the `Opening` table
 2. When importing games, each position is checked against known openings
 3. The deepest (most specific) matching opening is assigned to the game
+
+![Opoening Detection Flow](images/opening_detection_flow.png)
 
 ### ECO Classification
 
@@ -182,30 +156,38 @@ uv run python manage.py runserver
 chess-explorer/
 ├── manage.py
 ├── pyproject.toml
+├── uv.lock
+├── API.md                   # REST API documentation
 ├── chess_explorer/          # Project settings
 │   ├── settings.py
 │   ├── urls.py
+│   ├── asgi.py
 │   └── wsgi.py
-└── chess_core/                   # Django app
+├── flowcharts/              # Architecture diagrams
+└── chess_core/              # Django app
     ├── models.py            # Game and Opening models
     ├── admin.py             # Admin interface
+    ├── views.py
     ├── repositories.py      # GameRepository
+    ├── api/                 # Django Ninja REST API (v1)
+    │   ├── router.py        # Endpoints (e.g. /openings/stats/)
+    │   └── schemas.py       # Pydantic request/response schemas
     ├── parsers/
     │   ├── base.py          # GameParser protocol + GameData
     │   └── pgn.py           # PGN parser
     ├── services/
-    │   └── openings.py      # OpeningDetector service
+    │   ├── openings.py      # OpeningDetector service
+    │   └── opening_stats.py # Aggregated opening statistics
     ├── data/                # ECO opening data (JSON)
-    │   ├── ecoA.json
-    │   ├── ecoB.json
-    │   ├── ecoC.json
-    │   ├── ecoD.json
-    │   ├── ecoE.json
+    │   ├── ecoA.json … ecoE.json
     │   └── eco_interpolated.json
-    └── management/commands/
-        ├── import_games.py    # Import games from files
-        ├── load_openings.py   # Load ECO data into database
-        └── detect_openings.py # Backfill openings for existing games
+    ├── migrations/
+    ├── management/commands/
+    │   ├── import_games.py
+    │   ├── load_openings.py
+    │   ├── detect_openings.py
+    │   └── backfill_move_count.py
+    └── tests/
 ```
 
 ## Adding New Formats
