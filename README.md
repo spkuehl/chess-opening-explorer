@@ -1,13 +1,13 @@
 # Chess Explorer
 
-A Django application for ingesting, analyzing, and exploring chess games. Built with SOLID principles for extensibility.
+A Django application for ingesting, analyzing, and exploring chess games with large datasets.
 
 ## Features
 
 - Import chess games from PGN files
 - Automatic opening detection using ECO (Encyclopedia of Chess Openings) classification
 - Store games in PostgreSQL (or SQLite for development)
-- Extensible parser architecture for adding new formats
+- Extensible parser architecture for adding new formats for data intake
 - Django admin interface for browsing games
 - API for fetching filtered data sets
 - Batch import with deduplication

@@ -85,6 +85,8 @@ Returns aggregated statistics for chess openings including game counts, win/draw
 | `items[].avg_moves` | float | Average number of moves per game (null if no data) |
 | `total` | integer | Total count of openings in the response |
 
+![Opoening Detection Flow](images/api-sample-oas.png)
+
 **Example Requests**
 
 ```bash
@@ -133,27 +135,27 @@ Returned when query parameters fail validation.
 The API follows SOLID principles with clean layer separation:
 
 ```
+┌────────────────────────────────────────────────────────────────┐
+│                      API Layer                                 │
+│  chess_core/api/router.py - Thin controllers, request handling │
+└────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      API Layer                               │
-│  chess_core/api/router.py - Thin controllers, request handling   │
+│                    Schema Layer                             │
+│  chess_core/api/schemas.py - Pydantic models for validation │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Schema Layer                              │
-│  chess_core/api/schemas.py - Pydantic models for validation      │
+│                   Service Layer                             │
+│  chess_core/services/opening_stats.py - Business logic      │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Service Layer                              │
-│  chess_core/services/opening_stats.py - Business logic           │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Data Layer                                │
-│  chess_core/models.py - Django ORM models                        │
+│                    Data Layer                               │
+│  chess_core/models.py - Django ORM models                   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
