@@ -227,6 +227,7 @@ No changes needed to the repository or models.
 ## Dependencies
 
 - `django` - Web framework with ORM
+- `django-ninja` - REST API framework
 - `psycopg[binary]` - PostgreSQL adapter
 - `python-chess` - PGN parsing
 
