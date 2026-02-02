@@ -2,6 +2,9 @@
 
 A Django application for ingesting, analyzing, and exploring chess games with large datasets.
 
+Note for getting data: Any PGN file will do, but you can download PGN games from "Titled Tuesday" here for example https://www.chess.com/tournament/live/titled-tuesday-blitz-january-27-2026-6170439
+![Architecture Flow](images/titled-tuesday-download-screenshot.png)
+
 ## Features
 
 - Import chess games from PGN files
