@@ -17,6 +17,9 @@ class OpeningStatsSchema(Schema):
         white_wins: Number of games won by white (result "1-0").
         draws: Number of drawn games (result "1/2-1/2").
         black_wins: Number of games won by black (result "0-1").
+        white_pct: Percentage of games won by white (0–100).
+        draw_pct: Percentage of drawn games (0–100).
+        black_pct: Percentage of games won by black (0–100).
         avg_moves: Average number of moves per game.
     """
 
@@ -27,6 +30,9 @@ class OpeningStatsSchema(Schema):
     white_wins: int
     draws: int
     black_wins: int
+    white_pct: float
+    draw_pct: float
+    black_pct: float
     avg_moves: float | None
 
 

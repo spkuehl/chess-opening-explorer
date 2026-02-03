@@ -13,7 +13,7 @@
       <th><a href="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-get="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.eco_code.indicator }} ECO</a></th>
       <th><a href="{% url 'explore' %}{{ column_links.name.url }}" hx-get="{% url 'explore' %}{{ column_links.name.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.name.indicator }} Opening</a></th>
       <th><a href="{% url 'explore' %}{{ column_links.game_count.url }}" hx-get="{% url 'explore' %}{{ column_links.game_count.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.game_count.indicator }} Games</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.white_wins.url }}" hx-get="{% url 'explore' %}{{ column_links.white_wins.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.white_wins.indicator }} Results</a></th>
+      <th><a href="{% url 'explore' %}{{ column_links.results.url }}" hx-get="{% url 'explore' %}{{ column_links.results.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.results.indicator }} {{ column_links.results.label }}</a></th>
       <th><a href="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-get="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.avg_moves.indicator }} Avg moves</a></th>
     </tr>
   </thead>
@@ -25,13 +25,10 @@
       <td>{{ row.game_count }}</td>
       <td>
         {% if row.game_count %}
-        {% widthratio row.white_wins row.game_count 100 as white_pct %}
-        {% widthratio row.draws row.game_count 100 as draw_pct %}
-        {% widthratio row.black_wins row.game_count 100 as black_pct %}
         <div class="results-bar" title="White {{ row.white_wins }} · Draw {{ row.draws }} · Black {{ row.black_wins }}">
-          <span class="w" style="width: {{ white_pct|default:0 }}%">{% if white_pct %}{{ white_pct }}%{% endif %}</span>
-          <span class="d" style="width: {{ draw_pct|default:0 }}%"></span>
-          <span class="b" style="flex: 1 0 0">{% if black_pct %}{{ black_pct }}%{% endif %}</span>
+          <span class="w" style="width: {{ row.white_pct|default:0 }}%">{% if row.white_pct %}{{ row.white_pct }}%{% endif %}</span>
+          <span class="d" style="width: {{ row.draw_pct|default:0 }}%"></span>
+          <span class="b" style="flex: 1 0 0">{% if row.black_pct %}{{ row.black_pct }}%{% endif %}</span>
         </div>
         {% else %}
         <div class="results-bar" title="No games"><span class="d" style="width: 100%"></span></div>

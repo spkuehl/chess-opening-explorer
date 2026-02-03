@@ -76,6 +76,9 @@ def get_opening_stats(
             white_wins=r["white_wins"],
             draws=r["draws"],
             black_wins=r["black_wins"],
+            white_pct=r["white_pct"],
+            draw_pct=r["draw_pct"],
+            black_pct=r["black_pct"],
             avg_moves=round(r["avg_moves"], 2) if r["avg_moves"] else None,
         )
         for r in results

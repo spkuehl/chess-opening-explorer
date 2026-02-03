@@ -24,7 +24,7 @@ def _get_params_from_request(request):
     raw = request.GET.dict()
     data = {k: v for k, v in raw.items() if v != ""}
     if "threshold" not in data:
-        data["threshold"] = 1
+        data["threshold"] = 10
     try:
         schema = OpeningStatsFilterSchema(**data)
         params = OpeningStatsFilterParams(**schema.model_dump())
@@ -70,6 +70,27 @@ def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
                 "url": sort_urls[f"{field}_desc"],
                 "indicator": "",
             }
+
+    # Results column: desc = white_pct desc (white perspective), asc = black_pct desc (black perspective)
+    if current_sort_by == "white_pct" and current_order == "desc":
+        column_links["results"] = {
+            "url": sort_urls["black_pct_desc"],
+            "indicator": "↓",
+            "label": "Results",
+        }
+    elif current_sort_by == "black_pct" and current_order == "desc":
+        column_links["results"] = {
+            "url": sort_urls["white_pct_desc"],
+            "indicator": "↑",
+            "label": "Results",
+        }
+    else:
+        column_links["results"] = {
+            "url": sort_urls["white_pct_desc"],
+            "indicator": "",
+            "label": "Results",
+        }
+
     return sort_urls, column_links, current_sort_by, current_order
 
 
@@ -116,6 +137,9 @@ def explore_openings(request):
             "white_wins": r["white_wins"],
             "draws": r["draws"],
             "black_wins": r["black_wins"],
+            "white_pct": r["white_pct"],
+            "draw_pct": r["draw_pct"],
+            "black_pct": r["black_pct"],
             "avg_moves": (
                 round(r["avg_moves"], 2) if r["avg_moves"] is not None else None
             ),

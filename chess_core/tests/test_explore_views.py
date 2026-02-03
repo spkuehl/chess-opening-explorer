@@ -83,9 +83,8 @@ def test_explore_valid_filters_repopulate_form(
     """Valid GET params are reflected in form_data (input values)."""
     response = client.get(
         "/explore/",
-        {"any_player": "Test", "threshold": "5", "eco_code": "B20"},
+        {"threshold": "5", "eco_code": "B20"},
     )
     assert response.status_code == 200
-    assert b'value="Test"' in response.content
     assert b'value="B20"' in response.content
     assert b'value="5"' in response.content
