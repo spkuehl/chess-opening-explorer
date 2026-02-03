@@ -49,6 +49,10 @@ Returns aggregated statistics for chess openings including game counts, win/draw
 | `black_elo_min` | integer | - | Minimum black player ELO |
 | `black_elo_max` | integer | - | Maximum black player ELO |
 | `threshold` | integer | 1 | Minimum game count required for an opening to appear in results |
+| `sort_by` | string | `eco_code` | Sort field: `eco_code`, `name`, `game_count`, `white_pct`, `draw_pct`, `black_pct`, `avg_moves` |
+| `order` | string | `asc` | Sort order: `asc` or `desc` |
+| `page` | integer | 1 | Page number (1-based) for pagination |
+| `page_size` | integer | 25 | Number of items per page |
 
 **Response**
 
@@ -63,6 +67,9 @@ Returns aggregated statistics for chess openings including game counts, win/draw
       "white_wins": 687,
       "draws": 412,
       "black_wins": 424,
+      "white_pct": 45.1,
+      "draw_pct": 27.1,
+      "black_pct": 27.8,
       "avg_moves": 42.3
     }
   ],
@@ -82,8 +89,11 @@ Returns aggregated statistics for chess openings including game counts, win/draw
 | `items[].white_wins` | integer | Number of games won by white (result "1-0") |
 | `items[].draws` | integer | Number of drawn games (result "1/2-1/2") |
 | `items[].black_wins` | integer | Number of games won by black (result "0-1") |
+| `items[].white_pct` | float | Percentage of games won by white (rounded) |
+| `items[].draw_pct` | float | Percentage of drawn games (rounded) |
+| `items[].black_pct` | float | Percentage of games won by black (rounded) |
 | `items[].avg_moves` | float | Average number of moves per game (null if no data) |
-| `total` | integer | Total count of openings in the response |
+| `total` | integer | Total count of openings matching the filters (for pagination) |
 
 ![Opoening Detection Flow](images/api-sample-oas.png)
 
@@ -110,6 +120,9 @@ curl "http://localhost:8000/api/v1/openings/stats/?opening_name=Zukertort%20Open
 
 # Combined filters
 curl "http://localhost:8000/api/v1/openings/stats/?white_player=Nakamura&date_from=2024-01-01&threshold=5"
+
+# Sort by white win percentage (descending), page 2, 50 per page
+curl "http://localhost:8000/api/v1/openings/stats/?sort_by=white_pct&order=desc&page=2&page_size=50"
 ```
 
 ## Error Responses

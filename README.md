@@ -12,7 +12,8 @@ Note for getting data: Any PGN file will do, but you can download PGN games from
 - Store games in PostgreSQL (or SQLite for development)
 - Extensible parser architecture for adding new formats for data intake
 - Django admin interface for browsing games
-- API for fetching filtered data sets
+- **HTMX explorer** at `/explore/` for opening statistics (filters, sort, pagination, result bar charts)
+- API for fetching filtered data sets (sorting, pagination, normalized percentages)
 - Batch import with deduplication
 
 ## Architecture
@@ -153,6 +154,20 @@ uv run python manage.py runserver
 # Visit http://localhost:8000/admin/chess_core/game/
 ```
 
+### Explore Openings (HTMX UI)
+
+A server-rendered explorer at `/explore/` lets you filter and sort opening statistics with instant updates (HTMX). It uses the same service layer as the API.
+
+```bash
+uv run python manage.py runserver
+# Visit http://localhost:8000/explore/
+```
+
+- **Filters**: ECO code, opening name, date range, minimum games
+- **Sorting**: By ECO, opening name, games, results (white/black win %), avg moves
+- **Pagination**: Page size 25 (default), previous/next
+- **Results**: 100% stacked bar with white/draw/black percentages per opening
+
 ## Project Structure
 
 ```
@@ -171,6 +186,7 @@ chess-explorer/
     ├── models.py            # Game and Opening models
     ├── admin.py             # Admin interface
     ├── views.py
+    ├── templates/           # HTMX explorer (base, explore, partials)
     ├── repositories.py      # GameRepository
     ├── api/                 # Django Ninja REST API (v1)
     │   ├── router.py        # Endpoints (e.g. /openings/stats/)
@@ -230,6 +246,8 @@ No changes needed to the repository or models.
 - `django-ninja` - REST API framework
 - `psycopg[binary]` - PostgreSQL adapter
 - `python-chess` - PGN parsing
+
+No front-end build step: the explorer uses HTMX (CDN) and Pico CSS (CDN).
 
 ## Development
 
