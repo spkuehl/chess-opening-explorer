@@ -1,4 +1,16 @@
 {% if stats %}
+<style>
+  .results-bar { display: flex; width: 100%; height: 1.75rem; min-width: 160px; border-radius: 4px; overflow: hidden; }
+  .results-bar span { display: flex; align-items: center; justify-content: center; min-width: 0; font-size: 0.7rem; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .results-bar .w { background: #e5e7eb; color: #1f2937; flex: 0 0 auto; }
+  .results-bar .d { background: #9ca3af; color: #111827; flex: 0 0 auto; }
+  .results-bar .b { background: #374151; color: #f9fafb; flex: 1 0 0; }
+  @media (prefers-color-scheme: dark) {
+    .results-bar .w { background: #4b5563; color: #f3f4f6; }
+    .results-bar .d { background: #6b7280; color: #f9fafb; }
+    .results-bar .b { background: #d1d5db; color: #111827; }
+  }
+</style>
 <p>Total: {{ total }} opening{{ total|pluralize }}.</p>
 <table>
   <thead>
@@ -6,9 +18,7 @@
       <th><a href="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-get="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.eco_code.indicator }} ECO</a></th>
       <th><a href="{% url 'explore' %}{{ column_links.name.url }}" hx-get="{% url 'explore' %}{{ column_links.name.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.name.indicator }} Opening</a></th>
       <th><a href="{% url 'explore' %}{{ column_links.game_count.url }}" hx-get="{% url 'explore' %}{{ column_links.game_count.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.game_count.indicator }} Games</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.white_wins.url }}" hx-get="{% url 'explore' %}{{ column_links.white_wins.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.white_wins.indicator }} White wins</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.draws.url }}" hx-get="{% url 'explore' %}{{ column_links.draws.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.draws.indicator }} Draws</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.black_wins.url }}" hx-get="{% url 'explore' %}{{ column_links.black_wins.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.black_wins.indicator }} Black wins</a></th>
+      <th>Results</th>
       <th><a href="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-get="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.avg_moves.indicator }} Avg moves</a></th>
     </tr>
   </thead>
@@ -18,9 +28,20 @@
       <td>{{ row.eco_code }}</td>
       <td>{{ row.name }}<br><span style="font-size: 0.875em">{{ row.moves }}</span></td>
       <td>{{ row.game_count }}</td>
-      <td>{{ row.white_wins }}</td>
-      <td>{{ row.draws }}</td>
-      <td>{{ row.black_wins }}</td>
+      <td>
+        {% if row.game_count %}
+        {% widthratio row.white_wins row.game_count 100 as white_pct %}
+        {% widthratio row.draws row.game_count 100 as draw_pct %}
+        {% widthratio row.black_wins row.game_count 100 as black_pct %}
+        <div class="results-bar" title="White {{ row.white_wins }} · Draw {{ row.draws }} · Black {{ row.black_wins }}">
+          <span class="w" style="width: {{ white_pct|default:0 }}%">{% if white_pct %}{{ white_pct }}%{% endif %}</span>
+          <span class="d" style="width: {{ draw_pct|default:0 }}%"></span>
+          <span class="b" style="flex: 1 0 0">{% if black_pct %}{{ black_pct }}%{% endif %}</span>
+        </div>
+        {% else %}
+        <div class="results-bar" title="No games"><span class="d" style="width: 100%"></span></div>
+        {% endif %}
+      </td>
       <td>{{ row.avg_moves|default:"—" }}</td>
     </tr>
     {% endfor %}
