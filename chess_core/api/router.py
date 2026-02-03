@@ -60,9 +60,11 @@ def get_opening_stats(
         threshold=filters.threshold,
         sort_by=filters.sort_by,
         order=filters.order,
+        page=filters.page,
+        page_size=filters.page_size,
     )
 
-    results = list(service.get_stats(filter_params))
+    results, total_count = service.get_stats(filter_params)
 
     # Transform query results to response schema
     items = [
@@ -79,4 +81,4 @@ def get_opening_stats(
         for r in results
     ]
 
-    return OpeningStatsResponse(items=items, total=len(items))
+    return OpeningStatsResponse(items=items, total=total_count)

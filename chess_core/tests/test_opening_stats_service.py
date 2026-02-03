@@ -132,7 +132,7 @@ class TestOpeningStatsServiceAggregation:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         # Should have 2 openings (Sicilian and French)
         assert len(results) == 2
@@ -150,7 +150,7 @@ class TestOpeningStatsServiceAggregation:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         sicilian_stats = next(
             r for r in results if r["opening__eco_code"] == "B20"
@@ -168,7 +168,7 @@ class TestOpeningStatsServiceAggregation:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         sicilian_stats = next(
             r for r in results if r["opening__eco_code"] == "B20"
@@ -188,7 +188,7 @@ class TestOpeningStatsServiceAggregation:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         # Should only have 1 opening with 1 game
         assert len(results) == 1
@@ -199,7 +199,7 @@ class TestOpeningStatsServiceAggregation:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 0
 
@@ -210,7 +210,7 @@ class TestOpeningStatsServiceAggregation:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         # Sicilian has 6 games, French has 3
         assert results[0]["opening__eco_code"] == "B20"
@@ -241,7 +241,7 @@ class TestOpeningStatsServicePlayerFilters:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams(white_player="Carlsen")
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -267,7 +267,7 @@ class TestOpeningStatsServicePlayerFilters:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams(black_player="Carlsen")
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -300,7 +300,7 @@ class TestOpeningStatsServicePlayerFilters:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams(any_player="Carlsen")
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 2
@@ -324,7 +324,7 @@ class TestOpeningStatsServicePlayerFilters:
             white_player="Carlsen",
         )
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         # Should match Nakamura (any_player), not just Carlsen as white
         assert len(results) == 1
@@ -360,7 +360,7 @@ class TestOpeningStatsServiceDateFilters:
             date_to=date(2024, 12, 31),
         )
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -390,7 +390,7 @@ class TestOpeningStatsServiceDateFilters:
             date_to=date(2023, 12, 31),
         )
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -425,7 +425,7 @@ class TestOpeningStatsServiceEloFilters:
         # Filter for high ELO games only (white >= 2700)
         filters = OpeningStatsFilterParams(white_elo_min=2700)
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -453,7 +453,7 @@ class TestOpeningStatsServiceEloFilters:
         # Filter for high black ELO (>= 2700)
         filters = OpeningStatsFilterParams(black_elo_min=2700)
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -481,7 +481,7 @@ class TestOpeningStatsServiceEloFilters:
         # Filter for lower ELO games only (white <= 2500)
         filters = OpeningStatsFilterParams(white_elo_max=2500)
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["game_count"] == 1
@@ -505,7 +505,7 @@ class TestOpeningStatsServiceOpeningFilters:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams(eco_code="B20")
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["opening__eco_code"] == "B20"
@@ -525,7 +525,7 @@ class TestOpeningStatsServiceOpeningFilters:
             opening_name="Zukertort Opening: Arctic",
         )
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1
         assert results[0]["opening__name"] == "Zukertort Opening: Arctic"
@@ -552,7 +552,7 @@ class TestOpeningStatsServiceThreshold:
         # Require at least 3 games
         filters = OpeningStatsFilterParams(threshold=3)
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         # Only Sicilian should be included
         assert len(results) == 1
@@ -569,7 +569,7 @@ class TestOpeningStatsServiceThreshold:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams()  # Default threshold=1
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 2
 
@@ -582,6 +582,6 @@ class TestOpeningStatsServiceThreshold:
         service = OpeningStatsService()
         filters = OpeningStatsFilterParams(threshold=0)
 
-        results = list(service.get_stats(filters))
+        results, _ = service.get_stats(filters)
 
         assert len(results) == 1

@@ -55,6 +55,6 @@
 </form>
 
 <div id="opening-stats-results">
-  {% include "partials/opening_stats_table.html" with stats=stats total=total sort_urls=sort_urls column_links=column_links current_sort_by=current_sort_by current_order=current_order %}
+  {% include "partials/opening_stats_table.html" with stats=stats total=total sort_urls=sort_urls column_links=column_links current_sort_by=current_sort_by current_order=current_order pagination=pagination %}
 </div>
 {% endblock %}

@@ -36,6 +36,9 @@ def _get_params_from_request(request):
 def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
     """Build sort query strings and per-column link info for the table headers.
 
+    Sort links reset to page=1 so changing sort shows the first page of the
+    new order.
+
     Returns:
         Tuple of (sort_urls, column_links, current_sort_by, current_order).
         column_links keys: eco_code, name, moves, game_count, white_wins, draws,
@@ -45,7 +48,7 @@ def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
     for sort_by in ALLOWED_SORT_FIELDS:
         for order in ("asc", "desc"):
             key = f"{sort_by}_{order}"
-            q = {**get_dict, "sort_by": sort_by, "order": order}
+            q = {**get_dict, "sort_by": sort_by, "order": order, "page": "1"}
             sort_urls[key] = "?" + urlencode(q)
     current_sort_by = get_dict.get("sort_by") or "game_count"
     current_order = get_dict.get("order") or "desc"
@@ -70,6 +73,30 @@ def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
     return sort_urls, column_links, current_sort_by, current_order
 
 
+def _build_pagination(get_dict: dict, total_count: int) -> dict:
+    """Build pagination context for the partial and full page."""
+    page = max(1, int(get_dict.get("page") or 1))
+    page_size = max(1, min(100, int(get_dict.get("page_size") or 25)))
+    total_pages = max(1, (total_count + page_size - 1) // page_size)
+    page = min(page, total_pages)
+    prev_url = None
+    if page > 1:
+        q = {**get_dict, "page": str(page - 1)}
+        prev_url = "?" + urlencode(q)
+    next_url = None
+    if page < total_pages:
+        q = {**get_dict, "page": str(page + 1)}
+        next_url = "?" + urlencode(q)
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "prev_url": prev_url,
+        "next_url": next_url,
+    }
+
+
 def explore_openings(request):
     """Serve the opening explorer: full page or HTMX partial.
 
@@ -78,7 +105,7 @@ def explore_openings(request):
     """
     filter_params, form_data, validation_error = _get_params_from_request(request)
     service = OpeningStatsService()
-    results = list(service.get_stats(filter_params))
+    results, total_count = service.get_stats(filter_params)
 
     stats = [
         {
@@ -95,10 +122,10 @@ def explore_openings(request):
         }
         for r in results
     ]
-    total = len(stats)
-    sort_urls, column_links, current_sort_by, current_order = _build_sort_urls(
-        request.GET.dict()
-    )
+    total = total_count
+    get_dict = request.GET.dict()
+    sort_urls, column_links, current_sort_by, current_order = _build_sort_urls(get_dict)
+    pagination = _build_pagination(get_dict, total_count)
     partial_ctx = {
         "stats": stats,
         "total": total,
@@ -106,6 +133,7 @@ def explore_openings(request):
         "column_links": column_links,
         "current_sort_by": current_sort_by,
         "current_order": current_order,
+        "pagination": pagination,
     }
 
     if request.headers.get("HX-Request"):
@@ -131,5 +159,6 @@ def explore_openings(request):
             "column_links": column_links,
             "current_sort_by": current_sort_by,
             "current_order": current_order,
+            "pagination": pagination,
         },
     )

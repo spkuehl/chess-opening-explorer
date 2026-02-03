@@ -34,6 +34,8 @@ class OpeningStatsFilterParams:
         sort_by: Field to sort by (eco_code, name, moves, game_count,
             white_wins, draws, black_wins, avg_moves).
         order: Sort direction ("asc" or "desc").
+        page: 1-based page number.
+        page_size: Number of results per page (capped by PAGE_SIZE_MAX).
     """
 
     white_player: str | None = None
@@ -50,6 +52,11 @@ class OpeningStatsFilterParams:
     threshold: int = 1
     sort_by: str | None = None
     order: str | None = None
+    page: int = 1
+    page_size: int = 25
+
+
+PAGE_SIZE_MAX = 100
 
 
 ALLOWED_SORT_FIELDS = frozenset(
@@ -90,30 +97,32 @@ class OpeningStatsService:
         ...     print(f"{stats['opening__name']}: {stats['game_count']} games")
     """
 
-    def get_stats(self, filters: OpeningStatsFilterParams) -> QuerySet:
-        """Get aggregated opening statistics with optional filters.
+    def get_stats(self, filters: OpeningStatsFilterParams) -> tuple[list[dict], int]:
+        """Get a page of aggregated opening statistics with optional filters.
 
-        Builds an optimized query that:
-        - Excludes games without an opening
-        - Applies all specified filters
-        - Groups by opening (eco_code, name)
-        - Calculates game counts, results, and average moves
-        - Applies threshold filter via HAVING clause
-        - Orders by game count descending
+        Builds an optimized query that filters, aggregates, sorts, then
+        returns one page of results and the total count.
 
         Args:
-            filters: Filter parameters for the query.
+            filters: Filter parameters including page and page_size.
 
         Returns:
-            QuerySet of dictionaries with aggregated stats per opening.
-            Each dict contains: opening__eco_code, opening__name, game_count,
-            white_wins, draws, black_wins, avg_moves.
+            Tuple of (page_items, total_count). page_items is a list of dicts
+            with opening__eco_code, opening__name, opening__moves, game_count,
+            white_wins, draws, black_wins, avg_moves. total_count is the
+            number of openings matching the filters (all pages).
         """
         qs = self._build_base_query()
         qs = self._apply_filters(qs, filters)
         qs = self._apply_aggregation(qs)
         qs = self._apply_threshold(qs, filters.threshold)
-        return self._apply_sort(qs, filters)
+        qs = self._apply_sort(qs, filters)
+        total_count = qs.count()
+        page = max(1, filters.page)
+        page_size = min(PAGE_SIZE_MAX, max(1, filters.page_size))
+        start = (page - 1) * page_size
+        page_qs = qs[start : start + page_size]
+        return list(page_qs), total_count
 
     def _build_base_query(self) -> QuerySet:
         """Build base query excluding games without openings."""

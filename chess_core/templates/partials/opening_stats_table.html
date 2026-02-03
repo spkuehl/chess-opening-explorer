@@ -26,6 +26,17 @@
     {% endfor %}
   </tbody>
 </table>
+{% if pagination.total_pages > 1 %}
+<nav aria-label="Pagination">
+  <p>Page {{ pagination.page }} of {{ pagination.total_pages }}.</p>
+  {% if pagination.prev_url %}
+  <a href="{% url 'explore' %}{{ pagination.prev_url }}" hx-get="{% url 'explore' %}{{ pagination.prev_url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">Previous</a>
+  {% endif %}
+  {% if pagination.next_url %}
+  <a href="{% url 'explore' %}{{ pagination.next_url }}" hx-get="{% url 'explore' %}{{ pagination.next_url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">Next</a>
+  {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p>No openings match the filters.</p>
 {% endif %}

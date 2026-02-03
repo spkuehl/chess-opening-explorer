@@ -3,6 +3,7 @@
 from datetime import date
 
 from ninja import Schema
+from pydantic import Field
 
 
 class OpeningStatsSchema(Schema):
@@ -64,6 +65,8 @@ class OpeningStatsFilterSchema(Schema):
             results.
         sort_by: Field to sort by (eco_code, name, moves, game_count, etc.).
         order: Sort direction ("asc" or "desc").
+        page: 1-based page number.
+        page_size: Results per page (max 100).
     """
 
     white_player: str | None = None
@@ -80,3 +83,5 @@ class OpeningStatsFilterSchema(Schema):
     threshold: int = 1
     sort_by: str | None = None
     order: str | None = None
+    page: int = Field(1, ge=1)
+    page_size: int = Field(25, ge=1, le=100)
