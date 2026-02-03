@@ -3,6 +3,7 @@
 from datetime import date
 
 from ninja import Schema
+from pydantic import Field
 
 
 class OpeningStatsSchema(Schema):
@@ -16,6 +17,9 @@ class OpeningStatsSchema(Schema):
         white_wins: Number of games won by white (result "1-0").
         draws: Number of drawn games (result "1/2-1/2").
         black_wins: Number of games won by black (result "0-1").
+        white_pct: Percentage of games won by white (0–100).
+        draw_pct: Percentage of drawn games (0–100).
+        black_pct: Percentage of games won by black (0–100).
         avg_moves: Average number of moves per game.
     """
 
@@ -26,6 +30,9 @@ class OpeningStatsSchema(Schema):
     white_wins: int
     draws: int
     black_wins: int
+    white_pct: float
+    draw_pct: float
+    black_pct: float
     avg_moves: float | None
 
 
@@ -62,6 +69,10 @@ class OpeningStatsFilterSchema(Schema):
         black_elo_max: Maximum black player ELO.
         threshold: Minimum game count required for opening to appear in
             results.
+        sort_by: Field to sort by (eco_code, name, moves, game_count, etc.).
+        order: Sort direction ("asc" or "desc").
+        page: 1-based page number.
+        page_size: Results per page (max 100).
     """
 
     white_player: str | None = None
@@ -76,3 +87,7 @@ class OpeningStatsFilterSchema(Schema):
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     threshold: int = 1
+    sort_by: str | None = None
+    order: str | None = None
+    page: int = Field(1, ge=1)
+    page_size: int = Field(25, ge=1, le=100)

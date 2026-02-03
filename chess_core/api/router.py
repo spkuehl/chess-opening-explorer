@@ -58,9 +58,13 @@ def get_opening_stats(
         black_elo_min=filters.black_elo_min,
         black_elo_max=filters.black_elo_max,
         threshold=filters.threshold,
+        sort_by=filters.sort_by,
+        order=filters.order,
+        page=filters.page,
+        page_size=filters.page_size,
     )
 
-    results = list(service.get_stats(filter_params))
+    results, total_count = service.get_stats(filter_params)
 
     # Transform query results to response schema
     items = [
@@ -72,9 +76,12 @@ def get_opening_stats(
             white_wins=r["white_wins"],
             draws=r["draws"],
             black_wins=r["black_wins"],
+            white_pct=r["white_pct"],
+            draw_pct=r["draw_pct"],
+            black_pct=r["black_pct"],
             avg_moves=round(r["avg_moves"], 2) if r["avg_moves"] else None,
         )
         for r in results
     ]
 
-    return OpeningStatsResponse(items=items, total=len(items))
+    return OpeningStatsResponse(items=items, total=total_count)

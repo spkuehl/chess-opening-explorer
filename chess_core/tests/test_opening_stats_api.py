@@ -133,6 +133,9 @@ class TestOpeningStatsEndpoint:
         assert "white_wins" in item
         assert "draws" in item
         assert "black_wins" in item
+        assert "white_pct" in item
+        assert "draw_pct" in item
+        assert "black_pct" in item
         assert "avg_moves" in item
 
     def test_aggregation_values_correct(
@@ -150,6 +153,9 @@ class TestOpeningStatsEndpoint:
         assert sicilian["white_wins"] == 3
         assert sicilian["draws"] == 1
         assert sicilian["black_wins"] == 1
+        assert sicilian["white_pct"] == 60.0
+        assert sicilian["draw_pct"] == 20.0
+        assert sicilian["black_pct"] == 20.0
         # Avg moves: (40+40+40+50+35) / 5 / 2 = 20.5
         assert sicilian["avg_moves"] == 20.5
 

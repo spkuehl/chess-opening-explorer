@@ -3,7 +3,8 @@
 from dataclasses import dataclass
 from datetime import date
 
-from django.db.models import Avg, Count, Q, QuerySet
+from django.db.models import Avg, Count, ExpressionWrapper, F, FloatField, Q, QuerySet
+from django.db.models.functions import Coalesce, NullIf
 
 from chess_core.models import Game
 
@@ -31,6 +32,12 @@ class OpeningStatsFilterParams:
         black_elo_max: Maximum black player ELO.
         threshold: Minimum game count required for opening to appear in
             results.
+        sort_by: Field to sort by (eco_code, name, moves, game_count,
+            white_wins, draws, black_wins, white_pct, draw_pct, black_pct,
+            avg_moves).
+        order: Sort direction ("asc" or "desc").
+        page: 1-based page number.
+        page_size: Number of results per page (capped by PAGE_SIZE_MAX).
     """
 
     white_player: str | None = None
@@ -45,6 +52,44 @@ class OpeningStatsFilterParams:
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     threshold: int = 1
+    sort_by: str | None = None
+    order: str | None = None
+    page: int = 1
+    page_size: int = 15
+
+
+PAGE_SIZE_MAX = 100
+
+
+ALLOWED_SORT_FIELDS = frozenset(
+    {
+        "eco_code",
+        "name",
+        "moves",
+        "game_count",
+        "white_wins",
+        "draws",
+        "black_wins",
+        "white_pct",
+        "draw_pct",
+        "black_pct",
+        "avg_moves",
+    }
+)
+
+SORT_FIELD_TO_QUERY = {
+    "eco_code": "opening__eco_code",
+    "name": "opening__name",
+    "moves": "opening__moves",
+    "game_count": "game_count",
+    "white_wins": "white_wins",
+    "draws": "draws",
+    "black_wins": "black_wins",
+    "white_pct": "white_pct",
+    "draw_pct": "draw_pct",
+    "black_pct": "black_pct",
+    "avg_moves": "avg_moves",
+}
 
 
 class OpeningStatsService:
@@ -60,30 +105,63 @@ class OpeningStatsService:
         ...     print(f"{stats['opening__name']}: {stats['game_count']} games")
     """
 
-    def get_stats(self, filters: OpeningStatsFilterParams) -> QuerySet:
-        """Get aggregated opening statistics with optional filters.
+    def get_stats(self, filters: OpeningStatsFilterParams) -> tuple[list[dict], int]:
+        """Get a page of aggregated opening statistics with optional filters.
 
-        Builds an optimized query that:
-        - Excludes games without an opening
-        - Applies all specified filters
-        - Groups by opening (eco_code, name)
-        - Calculates game counts, results, and average moves
-        - Applies threshold filter via HAVING clause
-        - Orders by game count descending
+        Builds an optimized query that filters, aggregates, sorts, then
+        returns one page of results and the total count.
 
         Args:
-            filters: Filter parameters for the query.
+            filters: Filter parameters including page and page_size.
 
         Returns:
-            QuerySet of dictionaries with aggregated stats per opening.
-            Each dict contains: opening__eco_code, opening__name, game_count,
-            white_wins, draws, black_wins, avg_moves.
+            Tuple of (page_items, total_count). page_items is a list of dicts
+            with opening__eco_code, opening__name, opening__moves, game_count,
+            white_wins, draws, black_wins, avg_moves. total_count is the
+            number of openings matching the filters (all pages).
         """
         qs = self._build_base_query()
         qs = self._apply_filters(qs, filters)
         qs = self._apply_aggregation(qs)
         qs = self._apply_threshold(qs, filters.threshold)
-        return qs.order_by("-game_count")
+        qs = self._apply_percentage_annotations(qs)
+        qs = self._apply_sort(qs, filters)
+        total_count = qs.count()
+        page = max(1, filters.page)
+        page_size = min(PAGE_SIZE_MAX, max(1, filters.page_size))
+        start = (page - 1) * page_size
+        page_qs = qs[start : start + page_size]
+        items = list(page_qs)
+        for row in items:
+            row["white_pct"], row["draw_pct"], row["black_pct"] = (
+                self._result_percentages(
+                    row["game_count"],
+                    row["white_wins"],
+                    row["draws"],
+                    row["black_wins"],
+                )
+            )
+        return items, total_count
+
+    def _result_percentages(
+        self,
+        game_count: int,
+        white_wins: int,
+        draws: int,
+        black_wins: int,
+    ) -> tuple[float, float, float]:
+        """Normalized win/draw/loss percentages (0–100) for white, draw, black.
+
+        When game_count is 0, returns (0.0, 0.0, 0.0).
+        """
+        if game_count <= 0:
+            return (0.0, 0.0, 0.0)
+        scale = 100.0 / game_count
+        return (
+            round(white_wins * scale, 2),
+            round(draws * scale, 2),
+            round(black_wins * scale, 2),
+        )
 
     def _build_base_query(self) -> QuerySet:
         """Build base query excluding games without openings."""
@@ -163,12 +241,15 @@ class OpeningStatsService:
         - black_wins: Count of games where result is "0-1"
         - avg_moves: Average move_count across games
         """
-        return qs.values("opening__eco_code", "opening__name", "opening__moves").annotate(
+        return qs.values(
+            "opening__eco_code", "opening__name", "opening__moves"
+        ).annotate(
             game_count=Count("id"),
             white_wins=Count("id", filter=Q(result="1-0")),
             draws=Count("id", filter=Q(result="1/2-1/2")),
             black_wins=Count("id", filter=Q(result="0-1")),
-            avg_moves=Avg("move_count_ply") / 2.0, # Divide by 2 to get the game's move number, not ply.
+            avg_moves=Avg("move_count_ply")
+            / 2.0,  # Divide by 2 to get the game's move number, not ply.
         )
 
     def _apply_threshold(self, qs: QuerySet, threshold: int) -> QuerySet:
@@ -176,3 +257,30 @@ class OpeningStatsService:
         if threshold > 0:
             qs = qs.filter(game_count__gte=threshold)
         return qs
+
+    def _apply_percentage_annotations(self, qs: QuerySet) -> QuerySet:
+        """Annotate white_pct, draw_pct, black_pct (0–100) for sorting."""
+        denom = Coalesce(NullIf(F("game_count"), 0), 1)
+        return qs.annotate(
+            white_pct=ExpressionWrapper(
+                F("white_wins") * 100.0 / denom, output_field=FloatField()
+            ),
+            draw_pct=ExpressionWrapper(
+                F("draws") * 100.0 / denom, output_field=FloatField()
+            ),
+            black_pct=ExpressionWrapper(
+                F("black_wins") * 100.0 / denom, output_field=FloatField()
+            ),
+        )
+
+    def _apply_sort(self, qs: QuerySet, filters: OpeningStatsFilterParams) -> QuerySet:
+        """Apply ordering by sort_by and order, defaulting to game_count desc."""
+        sort_by = filters.sort_by
+        order = (filters.order or "desc").lower()
+        if order not in ("asc", "desc"):
+            order = "desc"
+        if not sort_by or sort_by not in ALLOWED_SORT_FIELDS:
+            return qs.order_by("-game_count")
+        query_field = SORT_FIELD_TO_QUERY[sort_by]
+        prefix = "-" if order == "desc" else ""
+        return qs.order_by(f"{prefix}{query_field}")

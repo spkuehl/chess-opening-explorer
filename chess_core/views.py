@@ -1,1 +1,188 @@
-# Create your views here.
+"""Views for the HTMX explorer UI."""
+
+from urllib.parse import urlencode
+
+from django.shortcuts import render
+from pydantic import ValidationError
+
+from chess_core.api.schemas import OpeningStatsFilterSchema
+from chess_core.services.opening_stats import (
+    ALLOWED_SORT_FIELDS,
+    OpeningStatsFilterParams,
+    OpeningStatsService,
+)
+
+
+def _get_params_from_request(request):
+    """Build filter params and form data from request.GET.
+
+    Returns:
+        Tuple of (filter_params, form_data, validation_error).
+        On success: (OpeningStatsFilterParams, request.GET.dict(), None).
+        On ValidationError: (default params, raw GET dict, ValidationError).
+    """
+    raw = request.GET.dict()
+    data = {k: v for k, v in raw.items() if v != ""}
+    if "threshold" not in data:
+        data["threshold"] = 10
+    try:
+        schema = OpeningStatsFilterSchema(**data)
+        params = OpeningStatsFilterParams(**schema.model_dump())
+        return params, raw, None
+    except ValidationError as e:
+        return OpeningStatsFilterParams(), raw, e
+
+
+def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
+    """Build sort query strings and per-column link info for the table headers.
+
+    Sort links reset to page=1 so changing sort shows the first page of the
+    new order.
+
+    Returns:
+        Tuple of (sort_urls, column_links, current_sort_by, current_order).
+        column_links keys: eco_code, name, moves, game_count, white_wins, draws,
+        black_wins, avg_moves; each value is {"url": "...", "indicator": "↑"|"↓"|""}.
+    """
+    sort_urls = {}
+    for sort_by in ALLOWED_SORT_FIELDS:
+        for order in ("asc", "desc"):
+            key = f"{sort_by}_{order}"
+            q = {**get_dict, "sort_by": sort_by, "order": order, "page": "1"}
+            sort_urls[key] = "?" + urlencode(q)
+    current_sort_by = get_dict.get("sort_by") or "game_count"
+    current_order = get_dict.get("order") or "desc"
+    if current_sort_by not in ALLOWED_SORT_FIELDS:
+        current_sort_by = "game_count"
+    if current_order not in ("asc", "desc"):
+        current_order = "desc"
+
+    column_links = {}
+    for field in ALLOWED_SORT_FIELDS:
+        if current_sort_by == field:
+            next_order = "asc" if current_order == "desc" else "desc"
+            column_links[field] = {
+                "url": sort_urls[f"{field}_{next_order}"],
+                "indicator": "↓" if current_order == "desc" else "↑",
+            }
+        else:
+            column_links[field] = {
+                "url": sort_urls[f"{field}_desc"],
+                "indicator": "",
+            }
+
+    # Results column: desc = white_pct desc (white perspective), asc = black_pct desc (black perspective)
+    if current_sort_by == "white_pct" and current_order == "desc":
+        column_links["results"] = {
+            "url": sort_urls["black_pct_desc"],
+            "indicator": "↓",
+            "label": "Results",
+        }
+    elif current_sort_by == "black_pct" and current_order == "desc":
+        column_links["results"] = {
+            "url": sort_urls["white_pct_desc"],
+            "indicator": "↑",
+            "label": "Results",
+        }
+    else:
+        column_links["results"] = {
+            "url": sort_urls["white_pct_desc"],
+            "indicator": "",
+            "label": "Results",
+        }
+
+    return sort_urls, column_links, current_sort_by, current_order
+
+
+def _build_pagination(get_dict: dict, total_count: int) -> dict:
+    """Build pagination context for the partial and full page."""
+    page = max(1, int(get_dict.get("page") or 1))
+    page_size = max(1, min(100, int(get_dict.get("page_size") or 25)))
+    total_pages = max(1, (total_count + page_size - 1) // page_size)
+    page = min(page, total_pages)
+    prev_url = None
+    if page > 1:
+        q = {**get_dict, "page": str(page - 1)}
+        prev_url = "?" + urlencode(q)
+    next_url = None
+    if page < total_pages:
+        q = {**get_dict, "page": str(page + 1)}
+        next_url = "?" + urlencode(q)
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_count": total_count,
+        "total_pages": total_pages,
+        "prev_url": prev_url,
+        "next_url": next_url,
+    }
+
+
+def explore_openings(request):
+    """Serve the opening explorer: full page or HTMX partial.
+
+    Uses OpeningStatsService with filters from GET. On validation error,
+    falls back to default params and shows an error message on the full page.
+    """
+    filter_params, form_data, validation_error = _get_params_from_request(request)
+    service = OpeningStatsService()
+    results, total_count = service.get_stats(filter_params)
+
+    stats = [
+        {
+            "eco_code": r["opening__eco_code"],
+            "name": r["opening__name"],
+            "moves": r["opening__moves"],
+            "game_count": r["game_count"],
+            "white_wins": r["white_wins"],
+            "draws": r["draws"],
+            "black_wins": r["black_wins"],
+            "white_pct": r["white_pct"],
+            "draw_pct": r["draw_pct"],
+            "black_pct": r["black_pct"],
+            "avg_moves": (
+                round(r["avg_moves"], 2) if r["avg_moves"] is not None else None
+            ),
+        }
+        for r in results
+    ]
+    total = total_count
+    get_dict = request.GET.dict()
+    sort_urls, column_links, current_sort_by, current_order = _build_sort_urls(get_dict)
+    pagination = _build_pagination(get_dict, total_count)
+    partial_ctx = {
+        "stats": stats,
+        "total": total,
+        "sort_urls": sort_urls,
+        "column_links": column_links,
+        "current_sort_by": current_sort_by,
+        "current_order": current_order,
+        "pagination": pagination,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "partials/opening_stats_table.html",
+            partial_ctx,
+        )
+    error_message = None
+    if validation_error is not None:
+        errs = validation_error.errors()
+        error_message = errs[0]["msg"] if errs else "Invalid filters."
+
+    return render(
+        request,
+        "explore.html",
+        {
+            "stats": stats,
+            "total": total,
+            "form_data": form_data,
+            "validation_error_message": error_message,
+            "sort_urls": sort_urls,
+            "column_links": column_links,
+            "current_sort_by": current_sort_by,
+            "current_order": current_order,
+            "pagination": pagination,
+        },
+    )
