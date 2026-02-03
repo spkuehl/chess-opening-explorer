@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Explore openings – Chess Explorer{% endblock %}
+
+{% block content %}
+<h1>Explore openings</h1>
+
+{% if validation_error_message %}
+<p role="alert">Invalid filters: {{ validation_error_message }} Using defaults.</p>
+{% endif %}
+
+<form
+  method="get"
+  action="{% url 'explore' %}"
+  hx-get="{% url 'explore' %}"
+  hx-target="#opening-stats-results"
+  hx-swap="innerHTML"
+  hx-trigger="change delay:200ms from:form"
+>
+  <fieldset>
+    <legend>Filters</legend>
+    <p>
+      <label for="any_player">Any player</label>
+      <input type="text" name="any_player" id="any_player" value="{{ form_data.any_player|default:'' }}">
+    </p>
+    <p>
+      <label for="white_player">White player</label>
+      <input type="text" name="white_player" id="white_player" value="{{ form_data.white_player|default:'' }}">
+    </p>
+    <p>
+      <label for="black_player">Black player</label>
+      <input type="text" name="black_player" id="black_player" value="{{ form_data.black_player|default:'' }}">
+    </p>
+    <p>
+      <label for="eco_code">ECO code</label>
+      <input type="text" name="eco_code" id="eco_code" value="{{ form_data.eco_code|default:'' }}" placeholder="e.g. B20">
+    </p>
+    <p>
+      <label for="opening_name">Opening name</label>
+      <input type="text" name="opening_name" id="opening_name" value="{{ form_data.opening_name|default:'' }}">
+    </p>
+    <p>
+      <label for="date_from">Date from</label>
+      <input type="date" name="date_from" id="date_from" value="{{ form_data.date_from|default:'' }}">
+    </p>
+    <p>
+      <label for="date_to">Date to</label>
+      <input type="date" name="date_to" id="date_to" value="{{ form_data.date_to|default:'' }}">
+    </p>
+    <p>
+      <label for="threshold">Min games</label>
+      <input type="number" name="threshold" id="threshold" value="{{ form_data.threshold|default:'1' }}" min="1">
+    </p>
+  </fieldset>
+</form>
+
+<div id="opening-stats-results">
+  {% include "partials/opening_stats_table.html" with stats=stats total=total %}
+</div>
+{% endblock %}

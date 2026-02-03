@@ -19,8 +19,10 @@ from django.contrib import admin
 from django.urls import path
 
 from chess_core.api import api
+from chess_core.views import explore_openings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", api.urls),
+    path("explore/", explore_openings, name="explore"),
 ]

@@ -1,0 +1,33 @@
+{% if stats %}
+<p>Total: {{ total }} opening{{ total|pluralize }}.</p>
+<table>
+  <thead>
+    <tr>
+      <th>ECO</th>
+      <th>Name</th>
+      <th>Moves</th>
+      <th>Games</th>
+      <th>White wins</th>
+      <th>Draws</th>
+      <th>Black wins</th>
+      <th>Avg moves</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in stats %}
+    <tr>
+      <td>{{ row.eco_code }}</td>
+      <td>{{ row.name }}</td>
+      <td>{{ row.moves }}</td>
+      <td>{{ row.game_count }}</td>
+      <td>{{ row.white_wins }}</td>
+      <td>{{ row.draws }}</td>
+      <td>{{ row.black_wins }}</td>
+      <td>{{ row.avg_moves|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No openings match the filters.</p>
+{% endif %}
