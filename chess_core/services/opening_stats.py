@@ -31,6 +31,9 @@ class OpeningStatsFilterParams:
         black_elo_max: Maximum black player ELO.
         threshold: Minimum game count required for opening to appear in
             results.
+        sort_by: Field to sort by (eco_code, name, moves, game_count,
+            white_wins, draws, black_wins, avg_moves).
+        order: Sort direction ("asc" or "desc").
     """
 
     white_player: str | None = None
@@ -45,6 +48,33 @@ class OpeningStatsFilterParams:
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     threshold: int = 1
+    sort_by: str | None = None
+    order: str | None = None
+
+
+ALLOWED_SORT_FIELDS = frozenset(
+    {
+        "eco_code",
+        "name",
+        "moves",
+        "game_count",
+        "white_wins",
+        "draws",
+        "black_wins",
+        "avg_moves",
+    }
+)
+
+SORT_FIELD_TO_QUERY = {
+    "eco_code": "opening__eco_code",
+    "name": "opening__name",
+    "moves": "opening__moves",
+    "game_count": "game_count",
+    "white_wins": "white_wins",
+    "draws": "draws",
+    "black_wins": "black_wins",
+    "avg_moves": "avg_moves",
+}
 
 
 class OpeningStatsService:
@@ -83,7 +113,7 @@ class OpeningStatsService:
         qs = self._apply_filters(qs, filters)
         qs = self._apply_aggregation(qs)
         qs = self._apply_threshold(qs, filters.threshold)
-        return qs.order_by("-game_count")
+        return self._apply_sort(qs, filters)
 
     def _build_base_query(self) -> QuerySet:
         """Build base query excluding games without openings."""
@@ -163,12 +193,15 @@ class OpeningStatsService:
         - black_wins: Count of games where result is "0-1"
         - avg_moves: Average move_count across games
         """
-        return qs.values("opening__eco_code", "opening__name", "opening__moves").annotate(
+        return qs.values(
+            "opening__eco_code", "opening__name", "opening__moves"
+        ).annotate(
             game_count=Count("id"),
             white_wins=Count("id", filter=Q(result="1-0")),
             draws=Count("id", filter=Q(result="1/2-1/2")),
             black_wins=Count("id", filter=Q(result="0-1")),
-            avg_moves=Avg("move_count_ply") / 2.0, # Divide by 2 to get the game's move number, not ply.
+            avg_moves=Avg("move_count_ply")
+            / 2.0,  # Divide by 2 to get the game's move number, not ply.
         )
 
     def _apply_threshold(self, qs: QuerySet, threshold: int) -> QuerySet:
@@ -176,3 +209,15 @@ class OpeningStatsService:
         if threshold > 0:
             qs = qs.filter(game_count__gte=threshold)
         return qs
+
+    def _apply_sort(self, qs: QuerySet, filters: OpeningStatsFilterParams) -> QuerySet:
+        """Apply ordering by sort_by and order, defaulting to game_count desc."""
+        sort_by = filters.sort_by
+        order = (filters.order or "desc").lower()
+        if order not in ("asc", "desc"):
+            order = "desc"
+        if not sort_by or sort_by not in ALLOWED_SORT_FIELDS:
+            return qs.order_by("-game_count")
+        query_field = SORT_FIELD_TO_QUERY[sort_by]
+        prefix = "-" if order == "desc" else ""
+        return qs.order_by(f"{prefix}{query_field}")

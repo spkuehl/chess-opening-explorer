@@ -1,10 +1,13 @@
 """Views for the HTMX explorer UI."""
 
+from urllib.parse import urlencode
+
 from django.shortcuts import render
 from pydantic import ValidationError
 
 from chess_core.api.schemas import OpeningStatsFilterSchema
 from chess_core.services.opening_stats import (
+    ALLOWED_SORT_FIELDS,
     OpeningStatsFilterParams,
     OpeningStatsService,
 )
@@ -28,6 +31,43 @@ def _get_params_from_request(request):
         return params, raw, None
     except ValidationError as e:
         return OpeningStatsFilterParams(), raw, e
+
+
+def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
+    """Build sort query strings and per-column link info for the table headers.
+
+    Returns:
+        Tuple of (sort_urls, column_links, current_sort_by, current_order).
+        column_links keys: eco_code, name, moves, game_count, white_wins, draws,
+        black_wins, avg_moves; each value is {"url": "...", "indicator": "↑"|"↓"|""}.
+    """
+    sort_urls = {}
+    for sort_by in ALLOWED_SORT_FIELDS:
+        for order in ("asc", "desc"):
+            key = f"{sort_by}_{order}"
+            q = {**get_dict, "sort_by": sort_by, "order": order}
+            sort_urls[key] = "?" + urlencode(q)
+    current_sort_by = get_dict.get("sort_by") or "game_count"
+    current_order = get_dict.get("order") or "desc"
+    if current_sort_by not in ALLOWED_SORT_FIELDS:
+        current_sort_by = "game_count"
+    if current_order not in ("asc", "desc"):
+        current_order = "desc"
+
+    column_links = {}
+    for field in ALLOWED_SORT_FIELDS:
+        if current_sort_by == field:
+            next_order = "asc" if current_order == "desc" else "desc"
+            column_links[field] = {
+                "url": sort_urls[f"{field}_{next_order}"],
+                "indicator": "↓" if current_order == "desc" else "↑",
+            }
+        else:
+            column_links[field] = {
+                "url": sort_urls[f"{field}_desc"],
+                "indicator": "",
+            }
+    return sort_urls, column_links, current_sort_by, current_order
 
 
 def explore_openings(request):
@@ -56,12 +96,23 @@ def explore_openings(request):
         for r in results
     ]
     total = len(stats)
+    sort_urls, column_links, current_sort_by, current_order = _build_sort_urls(
+        request.GET.dict()
+    )
+    partial_ctx = {
+        "stats": stats,
+        "total": total,
+        "sort_urls": sort_urls,
+        "column_links": column_links,
+        "current_sort_by": current_sort_by,
+        "current_order": current_order,
+    }
 
     if request.headers.get("HX-Request"):
         return render(
             request,
             "partials/opening_stats_table.html",
-            {"stats": stats, "total": total},
+            partial_ctx,
         )
     error_message = None
     if validation_error is not None:
@@ -76,5 +127,9 @@ def explore_openings(request):
             "total": total,
             "form_data": form_data,
             "validation_error_message": error_message,
+            "sort_urls": sort_urls,
+            "column_links": column_links,
+            "current_sort_by": current_sort_by,
+            "current_order": current_order,
         },
     )
