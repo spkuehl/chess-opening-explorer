@@ -25,9 +25,9 @@
       <td>{{ row.game_count }}</td>
       <td>
         {% if row.game_count %}
-        <div class="results-bar" title="White {{ row.white_wins }} · Draw {{ row.draws }} · Black {{ row.black_wins }}">
-          <span class="w" style="width: {{ row.white_pct|default:0 }}%">{% if row.white_pct %}{{ row.white_pct }}%{% endif %}</span>
-          <span class="d" style="width: {{ row.draw_pct|default:0 }}%"></span>
+        <div class="results-bar" style="--w-pct: {{ row.white_pct|default:0 }}; --d-pct: {{ row.draw_pct|default:0 }}" title="White {{ row.white_wins }} · Draw {{ row.draws }} · Black {{ row.black_wins }}">
+          <span class="w" style="width: calc(var(--w-pct) * 1%)">{% if row.white_pct %}{{ row.white_pct }}%{% endif %}</span>
+          <span class="d" style="width: calc(var(--d-pct) * 1%)"></span>
           <span class="b" style="flex: 1 0 0">{% if row.black_pct %}{{ row.black_pct }}%{% endif %}</span>
         </div>
         {% else %}
