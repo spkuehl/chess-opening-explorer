@@ -97,7 +97,7 @@ def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
 def _build_pagination(get_dict: dict, total_count: int) -> dict:
     """Build pagination context for the partial and full page."""
     page = max(1, int(get_dict.get("page") or 1))
-    page_size = max(1, min(100, int(get_dict.get("page_size") or 25)))
+    page_size = max(1, min(100, int(get_dict.get("page_size") or 10)))
     total_pages = max(1, (total_count + page_size - 1) // page_size)
     page = min(page, total_pages)
     prev_url = None

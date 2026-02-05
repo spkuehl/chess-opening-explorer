@@ -58,7 +58,7 @@ class OpeningStatsFilterParams:
     sort_by: str | None = None
     order: str | None = None
     page: int = 1
-    page_size: int = 15
+    page_size: int = 10
 
 
 PAGE_SIZE_MAX = 100

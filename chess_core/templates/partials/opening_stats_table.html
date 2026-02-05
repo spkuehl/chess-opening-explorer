@@ -24,7 +24,6 @@
   }
   .opening-board { width: 300px; max-width: 300px; }
 </style>
-<p>Total: {{ total }} opening{{ total|pluralize }}.</p>
 <table class="opening-stats-table">
   <thead>
     <tr>
@@ -63,6 +62,7 @@
     {% endfor %}
   </tbody>
 </table>
+<p>Total: {{ total }} opening{{ total|pluralize }}.</p>
 {% if pagination.total_pages > 1 %}
 <nav aria-label="Pagination">
   <p>Page {{ pagination.page }} of {{ pagination.total_pages }}.</p>
