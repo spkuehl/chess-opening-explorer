@@ -5,9 +5,27 @@
   .results-bar .w { background: #e5e7eb; color: #1f2937; flex: 0 0 auto; }
   .results-bar .d { background: #9ca3af; color: #111827; flex: 0 0 auto; }
   .results-bar .b { background: #374151; color: #f9fafb; flex: 1 0 0; }
+  /* Pico gives [role=button] primary background/border; override with page background so no blue */
+  .opening-stats-table { --opening-row-bg: var(--pico-background-color); }
+  .opening-stats-table tbody tr.opening-data-row {
+    --pico-primary-background: var(--opening-row-bg);
+    --pico-primary-border: var(--opening-row-bg);
+    --pico-primary-focus: var(--pico-muted-border-color);
+  }
+  .opening-stats-table thead th,
+  .opening-stats-table tbody tr.opening-data-row,
+  .opening-stats-table tbody tr.opening-data-row td,
+  .opening-stats-table tbody tr.expandable,
+  .opening-stats-table tbody tr.expandable td { background-color: var(--opening-row-bg); }
+  .opening-stats-table tbody tr.opening-data-row:hover,
+  .opening-stats-table tbody tr.opening-data-row:hover td {
+    background-color: var(--pico-table-row-stripped-background-color);
+    transition: background-color 0.15s ease;
+  }
+  .opening-board { width: 300px; max-width: 300px; }
 </style>
 <p>Total: {{ total }} opening{{ total|pluralize }}.</p>
-<table>
+<table class="opening-stats-table">
   <thead>
     <tr>
       <th><a href="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-get="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.eco_code.indicator }} ECO</a></th>
@@ -19,7 +37,7 @@
   </thead>
   <tbody>
     {% for row in stats %}
-    <tr>
+    <tr class="opening-data-row" data-moves="{{ row.moves }}" role="button" tabindex="0">
       <td>{{ row.eco_code }}</td>
       <td>{{ row.name }}<br><span style="font-size: 0.875em">{{ row.moves }}</span></td>
       <td>{{ row.game_count }}</td>
@@ -35,6 +53,12 @@
         {% endif %}
       </td>
       <td>{{ row.avg_moves|default:"—" }}</td>
+    </tr>
+    <tr class="expandable" hidden aria-hidden="true">
+      <td></td>
+      <td colspan="4">
+        {% include "partials/board_preview.html" with moves=row.moves %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
