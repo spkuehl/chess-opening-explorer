@@ -69,6 +69,8 @@ class OpeningStatsFilterSchema(Schema):
         black_elo_max: Maximum black player ELO.
         threshold: Minimum game count required for opening to appear in
             results.
+        opening_threshold: If set, only openings with ply_count greater
+            than or equal to this value.
         sort_by: Field to sort by (eco_code, name, moves, game_count, etc.).
         order: Sort direction ("asc" or "desc").
         page: 1-based page number.
@@ -87,6 +89,7 @@ class OpeningStatsFilterSchema(Schema):
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     threshold: int = 1
+    opening_threshold: int | None = None
     sort_by: str | None = None
     order: str | None = None
     page: int = Field(1, ge=1)

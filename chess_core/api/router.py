@@ -58,6 +58,7 @@ def get_opening_stats(
         black_elo_min=filters.black_elo_min,
         black_elo_max=filters.black_elo_max,
         threshold=filters.threshold,
+        opening_threshold=filters.opening_threshold,
         sort_by=filters.sort_by,
         order=filters.order,
         page=filters.page,

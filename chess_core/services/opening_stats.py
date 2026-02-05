@@ -32,6 +32,8 @@ class OpeningStatsFilterParams:
         black_elo_max: Maximum black player ELO.
         threshold: Minimum game count required for opening to appear in
             results.
+        opening_threshold: If set, only include openings with ply_count
+            greater than or equal to this value.
         sort_by: Field to sort by (eco_code, name, moves, game_count,
             white_wins, draws, black_wins, white_pct, draw_pct, black_pct,
             avg_moves).
@@ -52,6 +54,7 @@ class OpeningStatsFilterParams:
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     threshold: int = 1
+    opening_threshold: int | None = None
     sort_by: str | None = None
     order: str | None = None
     page: int = 1
@@ -205,6 +208,8 @@ class OpeningStatsService:
             qs = qs.filter(opening__eco_code=filters.eco_code)
         if filters.opening_name:
             qs = qs.filter(opening__name__icontains=filters.opening_name)
+        if filters.opening_threshold is not None:
+            qs = qs.filter(opening__ply_count__gte=filters.opening_threshold)
         return qs
 
     def _apply_date_filters(

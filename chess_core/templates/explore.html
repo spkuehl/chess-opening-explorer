@@ -40,6 +40,10 @@
         <label for="threshold">Min games</label>
         <input type="number" name="threshold" id="threshold" value="{{ form_data.threshold|default:'10' }}" min="1">
       </p>
+      <p>
+        <label for="opening_threshold">Min opening ply</label>
+        <input type="number" name="opening_threshold" id="opening_threshold" value="{{ form_data.opening_threshold|default:'' }}" min="1" placeholder="e.g. 10">
+      </p>
     </fieldset>
   </form>
 </details>
