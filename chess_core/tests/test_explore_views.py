@@ -43,7 +43,7 @@ def test_explore_full_page_with_data(
     client: Client, db: None, opening_with_games: Opening
 ) -> None:
     """Full page with data shows table and total."""
-    response = client.get("/explore/")
+    response = client.get("/explore/", {"threshold": "5"})
     assert response.status_code == 200
     assert b"Sicilian Defense" in response.content
     assert b"B20" in response.content
@@ -64,7 +64,9 @@ def test_explore_htmx_with_data_returns_table(
     client: Client, db: None, opening_with_games: Opening
 ) -> None:
     """HTMX request with data returns table fragment."""
-    response = client.get("/explore/", HTTP_HX_REQUEST="true")
+    response = client.get(
+        "/explore/", {"threshold": "5"}, HTTP_HX_REQUEST="true"
+    )
     assert response.status_code == 200
     assert b"Sicilian Defense" in response.content
     assert b"B20" in response.content

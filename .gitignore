@@ -76,3 +76,6 @@ coverage.xml
 
 # Large data files
 *.pgn
+
+# Large media (avoid pushing big GIFs)
+images/sample-ui.gif

@@ -5,6 +5,8 @@ A Django application for ingesting, analyzing, and exploring chess games with la
 Note for getting data: Any PGN file will do, but you can download PGN games from "Titled Tuesday" here for example https://www.chess.com/tournament/live/titled-tuesday-blitz-january-27-2026-6170439
 ![Architecture Flow](images/titled-tuesday-download-screenshot.png)
 
+![Sample UI](images/sample-ui.gif)
+
 ## Features
 
 - Import chess games from PGN files
@@ -27,6 +29,8 @@ Note for getting data: Any PGN file will do, but you can download PGN games from
 - **Liskov Substitution**: All parsers yield `GameData` dataclasses; repository accepts them uniformly
 - **Interface Segregation**: Small protocols (`GameParser`) - parsers don't need to know about Django
 - **Dependency Inversion**: Parsers produce plain dataclasses, not Django models - core parsing logic is framework-agnostic
+
+The explorer UI (including the opening board preview) is presentation-only: it consumes view context (e.g. `row.moves`) and does not introduce new backend responsibilities.
 
 ## Opening Detection
 

@@ -15,5 +15,94 @@
     {% block content %}{% endblock %}
   </main>
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+    crossorigin="anonymous"
+  >
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      var RE_MOVE_TOKEN = /^\d+\.?$|^\.\.\.$|^1-0$|^0-1$|^1\/2-1\/2$|^\*$/;
+
+      function parseMovesToFens(movesStr) {
+        if (!movesStr || typeof movesStr !== 'string') return ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'];
+        var game = new Chess();
+        var fens = [game.fen()];
+        var tokens = movesStr.trim().split(/\s+/);
+        for (var i = 0; i < tokens.length; i++) {
+          var t = tokens[i];
+          if (RE_MOVE_TOKEN.test(t)) continue;
+          var move = game.move(t);
+          if (move) fens.push(game.fen());
+        }
+        return fens;
+      }
+
+      var activeInterval = null;
+      var activeBoard = null;
+
+      function collapseAllExpandable(table) {
+        var rows = table && table.querySelectorAll ? table.querySelectorAll('tr.expandable') : [];
+        for (var i = 0; i < rows.length; i++) {
+          rows[i].hidden = true;
+          rows[i].setAttribute('aria-hidden', 'true');
+        }
+        if (activeInterval) {
+          clearInterval(activeInterval);
+          activeInterval = null;
+        }
+        if (activeBoard && typeof activeBoard.destroy === 'function') {
+          activeBoard.destroy();
+          activeBoard = null;
+        }
+      }
+
+      function handleRowClick(ev) {
+        var row = ev.target.closest('tr.opening-data-row');
+        if (!row) return;
+        var table = row.closest('table.opening-stats-table');
+        if (!table) return;
+        var nextRow = row.nextElementSibling;
+        if (!nextRow || !nextRow.classList.contains('expandable')) return;
+        var isExpanding = nextRow.hidden;
+        collapseAllExpandable(table);
+        if (!isExpanding) return;
+        nextRow.hidden = false;
+        nextRow.removeAttribute('aria-hidden');
+        var container = nextRow.querySelector('.opening-board');
+        if (!container || !container.dataset.moves) return;
+        var fens = parseMovesToFens(container.dataset.moves);
+        if (fens.length === 0) return;
+        activeBoard = Chessboard(container, {
+          position: fens[0],
+          pieceTheme: 'https://cdn.jsdelivr.net/gh/oakmac/chessboardjs@master/website/img/chesspieces/wikipedia/{piece}.png'
+        });
+        var idx = 1;
+        activeInterval = setInterval(function () {
+          if (idx >= fens.length) {
+            clearInterval(activeInterval);
+            activeInterval = null;
+            return;
+          }
+          activeBoard.position(fens[idx]);
+          idx += 1;
+        }, 1000);
+      }
+
+      document.addEventListener('click', handleRowClick);
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          var row = ev.target.closest('tr.opening-data-row');
+          if (row) {
+            ev.preventDefault();
+            handleRowClick({ target: row });
+          }
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
