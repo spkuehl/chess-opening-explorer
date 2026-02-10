@@ -41,10 +41,32 @@ class TestImportGamesCommand:
         assert Game.objects.count() == 3
         assert "Processed 3 games" in out.getvalue()
 
-    def test_import_file_not_found(self):
-        """Import non-existent file raises CommandError."""
-        with pytest.raises(CommandError, match="File not found"):
+    def test_import_path_not_found(self):
+        """Import non-existent path raises CommandError."""
+        with pytest.raises(CommandError, match="Path not found"):
             call_command("import_games", "/nonexistent/file.pgn")
+
+    def test_import_directory_imports_all_pgn_files(
+        self, sample_pgn_content: str, multi_game_pgn: str
+    ):
+        """Import directory processes all matching PGN files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dir_path = Path(tmpdir)
+            (dir_path / "a.pgn").write_text(sample_pgn_content)
+            (dir_path / "b.pgn").write_text(multi_game_pgn)
+
+            out = StringIO()
+            call_command("import_games", str(dir_path), stdout=out)
+
+            assert Game.objects.count() == 4
+            assert "2 file(s)" in out.getvalue()
+            assert "Processed 4 games" in out.getvalue()
+
+    def test_import_directory_empty_no_matching_files_raises(self):
+        """Import directory with no matching files raises CommandError."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with pytest.raises(CommandError, match="No .*\\.pgn files found"):
+                call_command("import_games", tmpdir)
 
     def test_import_with_batch_size(self, multi_game_pgn: str):
         """Import with custom batch size."""

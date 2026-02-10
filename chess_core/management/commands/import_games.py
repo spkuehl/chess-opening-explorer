@@ -9,18 +9,22 @@ from chess_core.parsers import PGNParser
 from chess_core.repositories import GameRepository
 from chess_core.services.openings import OpeningDetector
 
+FORMAT_GLOB: dict[str, str] = {"pgn": "*.pgn"}
+
 
 class Command(BaseCommand):
-    """Import chess games from a file into the database."""
+    """Import chess games from a file or directory into the database."""
 
-    help = "Import chess games from a file (PGN or other supported formats)"
+    help = (
+        "Import chess games from a file or directory (PGN or other supported formats)"
+    )
 
     def add_arguments(self, parser):
         """Add command arguments."""
         parser.add_argument(
-            "file",
+            "path",
             type=str,
-            help="Path to the game file to import",
+            help="Path to a game file or directory of game files to import",
         )
         parser.add_argument(
             "--format",
@@ -38,39 +42,47 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """Execute the import command."""
-        file_path = Path(options["file"])
+        path = Path(options["path"])
         file_format = options["format"]
         batch_size = options["batch_size"]
 
-        # Validate file exists
-        if not file_path.exists():
-            raise CommandError(f"File not found: {file_path}")
+        if not path.exists():
+            raise CommandError(f"Path not found: {path}")
+
+        if path.is_file():
+            files_to_import = [path]
+        else:
+            if not path.is_dir():
+                raise CommandError(f"Path is not a file or directory: {path}")
+            glob = FORMAT_GLOB.get(file_format, f"*.{file_format}")
+            files_to_import = sorted(path.glob(glob))
+            if not files_to_import:
+                raise CommandError(f"No {glob} files found in directory: {path}")
 
         # Initialize opening detector
         self.stdout.write("Loading opening database...")
         opening_detector = OpeningDetector()
         self.stdout.write(f"Loaded {len(opening_detector._fen_set)} opening positions")
 
-        # Select parser based on format
         parser = self._get_parser(file_format, opening_detector)
         if parser is None:
             raise CommandError(f"Unsupported format: {file_format}")
 
         repo = GameRepository()
-
-        # Get initial count
         initial_count = repo.count()
 
-        self.stdout.write(f"Importing games from: {file_path}")
+        self.stdout.write(f"Importing from: {path} ({len(files_to_import)} file(s))")
         self.stdout.write(f"Format: {file_format}")
         self.stdout.write(f"Batch size: {batch_size}")
         self.stdout.write("")
 
         start_time = time.time()
+        total_processed = 0
 
-        # Parse and save games
-        games = parser.parse(file_path)
-        total_processed = repo.save_batch(games, batch_size=batch_size)
+        for file_path in files_to_import:
+            self.stdout.write(f"  {file_path.name}...")
+            games = parser.parse(file_path)
+            total_processed += repo.save_batch(games, batch_size=batch_size)
 
         elapsed = time.time() - start_time
         final_count = repo.count()
