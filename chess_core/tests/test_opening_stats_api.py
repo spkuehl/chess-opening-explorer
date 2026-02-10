@@ -126,6 +126,7 @@ class TestOpeningStatsEndpoint:
 
         # Check first item has all required fields
         item = data["items"][0]
+        assert "opening_id" in item
         assert "eco_code" in item
         assert "name" in item
         assert "moves" in item

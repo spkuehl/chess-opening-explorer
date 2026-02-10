@@ -6,6 +6,42 @@ from ninja import Schema
 from pydantic import Field
 
 
+class LatestGameSchema(Schema):
+    """Response schema for the most recent game of an opening.
+
+    Attributes:
+        id: Game primary key.
+        source_id: Unique identifier from the source (e.g. PGN).
+        event: Event name.
+        site: Site name.
+        date: Game date.
+        round: Round designation.
+        white_player: White player name.
+        black_player: Black player name.
+        result: Game result (e.g. "1-0", "1/2-1/2", "0-1").
+        white_elo: White player ELO (optional).
+        black_elo: Black player ELO (optional).
+        time_control: Time control string.
+        termination: Termination description.
+        moves: Game moves in standard notation.
+    """
+
+    id: int
+    source_id: str
+    event: str
+    site: str
+    date: date | None
+    round: str
+    white_player: str
+    black_player: str
+    result: str
+    white_elo: int | None
+    black_elo: int | None
+    time_control: str
+    termination: str
+    moves: str
+
+
 class OpeningStatsSchema(Schema):
     """Response schema for individual opening statistics.
 
@@ -21,8 +57,10 @@ class OpeningStatsSchema(Schema):
         draw_pct: Percentage of drawn games (0–100).
         black_pct: Percentage of games won by black (0–100).
         avg_moves: Average number of moves per game.
+        opening_id: Primary key of the opening (for linking to latest-game).
     """
 
+    opening_id: int
     eco_code: str
     name: str
     moves: str

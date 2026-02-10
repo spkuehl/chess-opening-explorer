@@ -23,6 +23,8 @@
     transition: background-color 0.15s ease;
   }
   .opening-board { width: 300px; max-width: 300px; cursor: pointer; }
+  .expandable-row-content { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
+  .latest-game-wrap { min-width: 200px; }
 </style>
 <table class="opening-stats-table">
   <thead>
@@ -56,7 +58,10 @@
     <tr class="expandable" hidden aria-hidden="true">
       <td></td>
       <td colspan="4">
-        {% include "partials/board_preview.html" with moves=row.moves %}
+        <div class="expandable-row-content">
+          <div>{% include "partials/board_preview.html" with moves=row.moves %}</div>
+          <div class="latest-game-wrap" hx-get="{% url 'opening_latest_game' row.opening_id %}" hx-trigger="expand-reveal" hx-swap="innerHTML">Loading…</div>
+        </div>
       </td>
     </tr>
     {% endfor %}

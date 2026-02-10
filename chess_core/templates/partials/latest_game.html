@@ -1,0 +1,19 @@
+<section aria-label="Latest game for opening">
+  <p><strong>{{ opening.eco_code }}: {{ opening.name }}</strong><br>{{ opening.moves }}</p>
+  {% if game %}
+  <div class="latest-game-card">
+    <p>
+      <strong>{{ game.white_player }}</strong>
+      {% if game.white_elo %}({{ game.white_elo }}){% endif %}
+      vs
+      <strong>{{ game.black_player }}</strong>
+      {% if game.black_elo %}({{ game.black_elo }}){% endif %}
+      — {{ game.result }}
+    </p>
+    {% if game.date %}<p>Date: {{ game.date }}</p>{% endif %}
+    {% if game.event %}<p>{{ game.event }}</p>{% endif %}
+  </div>
+  {% else %}
+  <p>No games for this opening.</p>
+  {% endif %}
+</section>

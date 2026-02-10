@@ -2,10 +2,12 @@
 
 from urllib.parse import urlencode
 
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from pydantic import ValidationError
 
 from chess_core.api.schemas import OpeningStatsFilterSchema
+from chess_core.models import Opening
+from chess_core.services.latest_game import get_latest_game_for_opening
 from chess_core.services.opening_stats import (
     ALLOWED_SORT_FIELDS,
     OpeningStatsFilterParams,
@@ -130,6 +132,7 @@ def explore_openings(request):
 
     stats = [
         {
+            "opening_id": r["opening_id"],
             "eco_code": r["opening__eco_code"],
             "name": r["opening__name"],
             "moves": r["opening__moves"],
@@ -185,4 +188,26 @@ def explore_openings(request):
             "current_order": current_order,
             "pagination": pagination,
         },
+    )
+
+
+def latest_game_for_opening(request, opening_id: int):
+    """Serve the latest game for an opening: full page or HTMX partial.
+
+    Returns 404 if the opening does not exist. If the opening has no games,
+    renders a message instead of 404.
+    """
+    opening = get_object_or_404(Opening, pk=opening_id)
+    game = get_latest_game_for_opening(opening_id)
+    context = {"opening": opening, "game": game}
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "partials/latest_game.html",
+            context,
+        )
+    return render(
+        request,
+        "latest_game.html",
+        context,
     )
