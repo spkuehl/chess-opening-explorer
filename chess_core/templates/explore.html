@@ -97,7 +97,12 @@
   }
   document.body.addEventListener('htmx:afterSwap', function (ev) {
     if (ev.detail && ev.detail.target && ev.detail.target.id === 'explore-results') {
-      initWinRateChart();
+      setTimeout(function () {
+        initWinRateChart();
+        if (window.winRateChart) {
+          setTimeout(function () { window.winRateChart.resize(); }, 50);
+        }
+      }, 0);
     }
   });
 })();

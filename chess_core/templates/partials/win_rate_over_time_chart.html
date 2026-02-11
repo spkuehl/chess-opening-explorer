@@ -1,4 +1,4 @@
-<div id="win-rate-chart-wrapper">
+<div id="win-rate-chart-wrapper" style="width: 100%; min-height: 100px;">
   {{ items|json_script:"win-rate-chart-data" }}
   {% if items %}
   <canvas id="win-rate-chart" width="400" height="100" aria-label="Win rate over time"></canvas>
