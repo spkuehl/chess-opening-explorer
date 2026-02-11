@@ -99,6 +99,12 @@ def _get_chart_params_from_request(request) -> WinRateOverTimeFilterParams:
             min_games = max(1, int(threshold_val))
         except (ValueError, TypeError):
             pass
+    opening_threshold = None
+    if get_dict.get("opening_threshold") is not None:
+        try:
+            opening_threshold = max(1, int(get_dict["opening_threshold"]))
+        except (ValueError, TypeError):
+            pass
     return WinRateOverTimeFilterParams(
         period=period,
         date_from=date_from,
@@ -106,6 +112,7 @@ def _get_chart_params_from_request(request) -> WinRateOverTimeFilterParams:
         eco_code=get_dict.get("eco_code") or None,
         opening_name=get_dict.get("opening_name") or None,
         min_games=min_games,
+        opening_threshold=opening_threshold,
     )
 
 

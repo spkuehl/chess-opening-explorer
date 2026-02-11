@@ -185,3 +185,4 @@ class WinRateOverTimeFilterSchema(Schema):
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     min_games: int = 1
+    opening_threshold: int | None = None

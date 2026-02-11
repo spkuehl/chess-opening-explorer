@@ -167,6 +167,7 @@ def get_win_rate_over_time_endpoint(
         black_elo_min=filters.black_elo_min,
         black_elo_max=filters.black_elo_max,
         min_games=filters.min_games,
+        opening_threshold=filters.opening_threshold,
     )
     items_raw = get_win_rate_over_time(params)
     items = [WinRateOverTimePointSchema(**r) for r in items_raw]

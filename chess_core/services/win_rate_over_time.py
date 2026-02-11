@@ -35,6 +35,7 @@ class WinRateOverTimeFilterParams:
     black_elo_min: int | None = None
     black_elo_max: int | None = None
     min_games: int = 1
+    opening_threshold: int | None = None
 
 
 def _format_period(period_date: date, period_type: PeriodType) -> tuple[str, str]:
@@ -129,6 +130,8 @@ def _apply_filters(qs: QuerySet, filters: WinRateOverTimeFilterParams) -> QueryS
         qs = qs.filter(opening_id=filters.opening_id)
     if filters.opening_name:
         qs = qs.filter(opening__name__icontains=filters.opening_name)
+    if filters.opening_threshold is not None:
+        qs = qs.filter(opening__ply_count__gte=filters.opening_threshold)
     if filters.date_from:
         qs = qs.filter(date__gte=filters.date_from)
     if filters.date_to:
