@@ -262,8 +262,8 @@ uv run ruff check .
 # Format code
 uv run ruff format .
 
-# Run tests
-uv run python manage.py test
+# Run tests (project uses pytest)
+uv run pytest
 ```
 
 ## License

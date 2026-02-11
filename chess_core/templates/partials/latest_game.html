@@ -59,7 +59,9 @@
   </div>
   {% endif %}
 <div style="text-align: center;">
-  <small>Recent Game{% if game.date %} – {{ game.date }}{% endif %}</small>
+  <small>
+    Recent Game{% if game.date %} – {{ game.date }}{% endif %}{% if game.result %} – {{ game.result }}{% endif %}
+  </small>
 </div>
   {% else %}
   <p>No games for this opening.</p>
