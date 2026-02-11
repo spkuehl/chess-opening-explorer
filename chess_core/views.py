@@ -1,5 +1,6 @@
 """Views for the HTMX explorer UI."""
 
+import re
 from urllib.parse import urlencode
 
 from django.shortcuts import get_object_or_404, render
@@ -13,6 +14,37 @@ from chess_core.services.opening_stats import (
     OpeningStatsFilterParams,
     OpeningStatsService,
 )
+
+RESULT_TOKENS = frozenset({"1-0", "0-1", "1/2-1/2", "*"})
+
+
+def _parse_moves_to_table(moves_str: str) -> list[dict[str, str | int]]:
+    """Parse PGN move text into rows for a (number, white, black) table.
+
+    Drops result tokens (1-0, 0-1, 1/2-1/2, *) and supports standard
+    "1. e4 e5 2. Nf3 Nc6" style notation.
+    """
+    if not moves_str or not moves_str.strip():
+        return []
+    text = moves_str.strip()
+    for res in RESULT_TOKENS:
+        if text.endswith(res):
+            text = text[: -len(res)].strip()
+            break
+    segments = re.split(r"\s*\d+\.\s*", text)
+    rows: list[dict[str, str | int]] = []
+    for seg in segments:
+        seg = seg.strip()
+        if not seg:
+            continue
+        tokens = [t for t in seg.split() if t not in RESULT_TOKENS]
+        if not tokens:
+            continue
+        move_num = len(rows) + 1
+        white = tokens[0]
+        black = tokens[1] if len(tokens) > 1 else ""
+        rows.append({"num": move_num, "white": white, "black": black})
+    return rows
 
 
 def _get_params_from_request(request):
@@ -199,7 +231,8 @@ def latest_game_for_opening(request, opening_id: int):
     """
     opening = get_object_or_404(Opening, pk=opening_id)
     game = get_latest_game_for_opening(opening_id)
-    context = {"opening": opening, "game": game}
+    moves_table = _parse_moves_to_table(game.moves) if game else []
+    context = {"opening": opening, "game": game, "moves_table": moves_table}
     if request.headers.get("HX-Request"):
         return render(
             request,
