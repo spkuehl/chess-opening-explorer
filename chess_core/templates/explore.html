@@ -3,6 +3,9 @@
 {% block title %}Explore openings – Chess Explorer{% endblock %}
 
 {% block content %}
+<style>
+  .form-filters { font-size: 0.85rem; }
+</style>
 <h1>Explore openings</h1>
 
 {% if validation_error_message %}
@@ -21,28 +24,27 @@
   >
     <fieldset class="grid" style="--pico-grid-columns: 2">
       <p>
-        <label for="eco_code">ECO code</label>
-        <input type="text" name="eco_code" id="eco_code" value="{{ form_data.eco_code|default:'' }}" placeholder="e.g. B20">
+        <label class="form-filters" for="eco_code">ECO code</label>
+        <input class="form-filters" type="text" name="eco_code" id="eco_code" value="{{ form_data.eco_code|default:'' }}" placeholder="e.g. B20">
       </p>
       <p>
-        <label for="opening_name">Opening name</label>
-        <input type="text" name="opening_name" id="opening_name" value="{{ form_data.opening_name|default:'' }}" placeholder="e.g. Queen's Gambit">
+        <label class="form-filters" for="opening_name">Opening name</label>
+        <input class="form-filters" type="text" name="opening_name" id="opening_name" value="{{ form_data.opening_name|default:'' }}" placeholder="e.g. Queen's Gambit">
       </p>
       <p>
-        <label for="date_from">Date from</label>
-        <input type="date" name="date_from" id="date_from" value="{{ form_data.date_from|default:'' }}">
+        <label class="form-filters" for="date_from">Date from</label>
+        <input class="form-filters" type="date" name="date_from" id="date_from" value="{{ form_data.date_from|default:'' }}">
       </p>
       <p>
-        <label for="date_to">Date to</label>
-        <input type="date" name="date_to" id="date_to" value="{{ form_data.date_to|default:'' }}">
+        <label class="form-filters" for="date_to">Date to</label>
+        <input class="form-filters" type="date" name="date_to" id="date_to" value="{{ form_data.date_to|default:'' }}">
       </p>
       <p>
-        <label for="threshold">Min games</label>
-        <input type="number" name="threshold" id="threshold" value="{{ form_data.threshold|default:'10' }}" min="1">
-      </p>
+        <label class="form-filters" for="threshold">Min games</label>
+        <input class="form-filters" type="number" name="threshold" id="threshold" value="{{ form_data.threshold|default:'10' }}" min="1">
       <p>
-        <label for="opening_threshold">Min opening ply</label>
-        <input type="number" name="opening_threshold" id="opening_threshold" value="{{ form_data.opening_threshold|default:'' }}" min="1" placeholder="e.g. 10">
+        <label class="form-filters" for="opening_threshold">Min ply <small>(half moves)</small></label>
+        <input class="form-filters" type="number" name="opening_threshold" id="opening_threshold" value="{{ form_data.opening_threshold|default:'3' }}" min="1" placeholder="3">
       </p>
     </fieldset>
   </form>

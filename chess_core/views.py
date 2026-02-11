@@ -59,6 +59,8 @@ def _get_params_from_request(request):
     data = {k: v for k, v in raw.items() if v != ""}
     if "threshold" not in data:
         data["threshold"] = 10
+    if "opening_threshold" not in data:
+        data["opening_threshold"] = 3
     try:
         schema = OpeningStatsFilterSchema(**data)
         params = OpeningStatsFilterParams(**schema.model_dump())
