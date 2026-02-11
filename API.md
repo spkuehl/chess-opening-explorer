@@ -60,6 +60,7 @@ Returns aggregated statistics for chess openings including game counts, win/draw
 {
   "items": [
     {
+      "opening_id": 42,
       "eco_code": "B33",
       "name": "Sicilian: Sveshnikov",
       "moves": "1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e5",
@@ -82,6 +83,7 @@ Returns aggregated statistics for chess openings including game counts, win/draw
 | Field | Type | Description |
 |-------|------|-------------|
 | `items` | array | List of opening statistics |
+| `items[].opening_id` | integer | Opening primary key (for linking to latest-game) |
 | `items[].eco_code` | string | ECO classification code (e.g., "B33") |
 | `items[].name` | string | Opening name (e.g., "Sicilian Defense") |
 | `items[].moves` | string | Opening move sequence (e.g., "1. e4 c5") |
@@ -123,6 +125,49 @@ curl "http://localhost:8000/api/v1/openings/stats/?white_player=Nakamura&date_fr
 
 # Sort by white win percentage (descending), page 2, 50 per page
 curl "http://localhost:8000/api/v1/openings/stats/?sort_by=white_pct&order=desc&page=2&page_size=50"
+```
+
+### Latest game for opening
+
+#### GET /api/v1/openings/{opening_id}/latest-game/
+
+Returns the most recent game (by date, then id) for the given opening. Responds with 404 if the opening has no games or the opening_id is invalid.
+
+**Path Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `opening_id` | integer | Opening primary key |
+
+**Response (200)**
+
+```json
+{
+  "id": 12345,
+  "source_id": "abc123",
+  "event": "Titled Tuesday Blitz",
+  "site": "Chess.com",
+  "date": "2026-01-27",
+  "round": "1",
+  "white_player": "Player1",
+  "black_player": "Player2",
+  "result": "1-0",
+  "white_elo": 2650,
+  "black_elo": 2620,
+  "time_control": "180+2",
+  "termination": "Checkmate",
+  "moves": "1. e4 e5 2. Nf3 ..."
+}
+```
+
+**Response (404)**
+
+No game found for this opening (or invalid opening_id).
+
+**Example Request**
+
+```bash
+curl http://localhost:8000/api/v1/openings/42/latest-game/
 ```
 
 ## Error Responses

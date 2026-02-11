@@ -1,12 +1,16 @@
 """API router for chess games endpoints."""
 
+from django.http import Http404
+
 from ninja import NinjaAPI, Query
 
 from chess_core.api.schemas import (
+    LatestGameSchema,
     OpeningStatsFilterSchema,
     OpeningStatsResponse,
     OpeningStatsSchema,
 )
+from chess_core.services.latest_game import get_latest_game_for_opening
 from chess_core.services.opening_stats import OpeningStatsFilterParams, OpeningStatsService
 
 api = NinjaAPI(
@@ -70,6 +74,7 @@ def get_opening_stats(
     # Transform query results to response schema
     items = [
         OpeningStatsSchema(
+            opening_id=r["opening_id"],
             eco_code=r["opening__eco_code"],
             name=r["opening__name"],
             moves=r["opening__moves"],
@@ -86,3 +91,36 @@ def get_opening_stats(
     ]
 
     return OpeningStatsResponse(items=items, total=total_count)
+
+
+@api.get(
+    "/openings/{opening_id}/latest-game/",
+    response=LatestGameSchema,
+    summary="Get latest game for opening",
+    description=(
+        "Returns the most recent game (by date, then id) for the given opening. "
+        "Responds with 404 if the opening has no games or the opening_id is invalid."
+    ),
+    tags=["openings"],
+)
+def get_latest_game_for_opening_endpoint(request, opening_id: int) -> LatestGameSchema:
+    """Get the most recent game for an opening by opening id."""
+    game = get_latest_game_for_opening(opening_id)
+    if game is None:
+        raise Http404("No game found for this opening.")
+    return LatestGameSchema(
+        id=game.id,
+        source_id=game.source_id,
+        event=game.event or "",
+        site=game.site or "",
+        date=game.date,
+        round=game.round or "",
+        white_player=game.white_player,
+        black_player=game.black_player,
+        result=game.result,
+        white_elo=game.white_elo,
+        black_elo=game.black_elo,
+        time_control=game.time_control or "",
+        termination=game.termination or "",
+        moves=game.moves,
+    )

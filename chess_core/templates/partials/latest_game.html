@@ -1,0 +1,66 @@
+<section aria-label="Latest game for opening">
+  <style>
+    .moves-table { font-size: 0.875rem; table-layout: fixed; width: 100%; }
+    .moves-table-wrap {
+      max-height: 300px;
+      width: max-content;
+      max-width: 420px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      border: 1px solid var(--pico-muted-border-color, #ccc);
+      border-radius: 4px;
+    }
+    .moves-table-wrap .moves-table thead th:nth-child(2),
+    .moves-table-wrap .moves-table thead th:nth-child(3) {
+      min-width: 10rem;
+      white-space: nowrap;
+    }
+    .moves-table-wrap .moves-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--pico-background-color);
+      z-index: 1;
+    }
+    .moves-table-wrap .moves-table th:first-child,
+    .moves-table-wrap .moves-table td:first-child {
+      width: 3ch;
+      min-width: 3ch;
+      white-space: nowrap;
+      text-align: right;
+    }
+  </style>
+  {% if game %}
+  {% if moves_table %}
+  <div class="moves-table-wrap">
+    <table class="moves-table" aria-label="Game moves">
+      <colgroup>
+        <col style="width: 3ch">
+        <col>
+        <col>
+      </colgroup>
+      <thead>
+        <tr>
+          <th></th>
+          <th>{% if game.result == "1-0" %}<strong>{% endif %}{{ game.white_player }}{% if game.white_elo %} <br />({{ game.white_elo }}){% endif %}{% if game.result == "1-0" %}</strong>{% endif %}</th>
+          <th>{% if game.result == "0-1" %}<strong>{% endif %}{{ game.black_player }}{% if game.black_elo %} <br />({{ game.black_elo }}){% endif %}{% if game.result == "0-1" %}</strong>{% endif %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in moves_table %}
+        <tr>
+          <td>{{ row.num }}</td>
+          <td>{{ row.white }}</td>
+          <td>{{ row.black }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+<div style="text-align: center;">
+  <small>Recent Game{% if game.date %} – {{ game.date }}{% endif %}</small>
+</div>
+  {% else %}
+  <p>No games for this opening.</p>
+  {% endif %}
+</section>

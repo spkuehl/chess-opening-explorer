@@ -72,6 +72,10 @@
         if (!isExpanding) return;
         nextRow.hidden = false;
         nextRow.removeAttribute('aria-hidden');
+        var latestWrap = nextRow.querySelector('.latest-game-wrap');
+        if (latestWrap && typeof htmx !== 'undefined') {
+          htmx.trigger(latestWrap, 'expand-reveal');
+        }
         var container = nextRow.querySelector('.opening-board');
         if (!container || !container.dataset.moves) return;
         var fens = parseMovesToFens(container.dataset.moves);

@@ -247,7 +247,10 @@ class OpeningStatsService:
         - avg_moves: Average move_count across games
         """
         return qs.values(
-            "opening__eco_code", "opening__name", "opening__moves"
+            "opening_id",
+            "opening__eco_code",
+            "opening__name",
+            "opening__moves",
         ).annotate(
             game_count=Count("id"),
             white_wins=Count("id", filter=Q(result="1-0")),

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Latest game – {{ opening.eco_code }}: {{ opening.name }} – Chess Explorer{% endblock %}
+
+{% block content %}
+<h1>Latest game</h1>
+{% include "partials/latest_game.html" with opening=opening game=game %}
+<p><a href="{% url 'explore' %}">Back to Explore openings</a></p>
+{% endblock %}
