@@ -9,9 +9,19 @@ from chess_core.api.schemas import (
     OpeningStatsFilterSchema,
     OpeningStatsResponse,
     OpeningStatsSchema,
+    WinRateOverTimeFilterSchema,
+    WinRateOverTimePointSchema,
+    WinRateOverTimeResponseSchema,
 )
 from chess_core.services.latest_game import get_latest_game_for_opening
-from chess_core.services.opening_stats import OpeningStatsFilterParams, OpeningStatsService
+from chess_core.services.opening_stats import (
+    OpeningStatsFilterParams,
+    OpeningStatsService,
+)
+from chess_core.services.win_rate_over_time import (
+    WinRateOverTimeFilterParams,
+    get_win_rate_over_time,
+)
 
 api = NinjaAPI(
     title="Chess Explorer API",
@@ -124,3 +134,40 @@ def get_latest_game_for_opening_endpoint(request, opening_id: int) -> LatestGame
         termination=game.termination or "",
         moves=game.moves,
     )
+
+
+@api.get(
+    "/stats/win-rate-over-time/",
+    response=WinRateOverTimeResponseSchema,
+    summary="Get win rate over time",
+    description=(
+        "Returns time-series points of white/draw/black win percentages by period "
+        "(week, month, or year). X axis is Game.date. Optional filters: date range, "
+        "opening, player, ELO, min_games per period."
+    ),
+    tags=["stats"],
+)
+def get_win_rate_over_time_endpoint(
+    request,
+    filters: WinRateOverTimeFilterSchema = Query(...),
+) -> WinRateOverTimeResponseSchema:
+    """Get win rate over time for stacked line chart."""
+    params = WinRateOverTimeFilterParams(
+        period=filters.period,
+        date_from=filters.date_from,
+        date_to=filters.date_to,
+        eco_code=filters.eco_code,
+        opening_id=filters.opening_id,
+        opening_name=filters.opening_name,
+        any_player=filters.any_player,
+        white_player=filters.white_player,
+        black_player=filters.black_player,
+        white_elo_min=filters.white_elo_min,
+        white_elo_max=filters.white_elo_max,
+        black_elo_min=filters.black_elo_min,
+        black_elo_max=filters.black_elo_max,
+        min_games=filters.min_games,
+    )
+    items_raw = get_win_rate_over_time(params)
+    items = [WinRateOverTimePointSchema(**r) for r in items_raw]
+    return WinRateOverTimeResponseSchema(items=items)

@@ -1,6 +1,7 @@
 """Pydantic schemas for Opening Stats API."""
 
 from datetime import date
+from typing import Literal
 
 from ninja import Schema
 from pydantic import Field
@@ -132,3 +133,55 @@ class OpeningStatsFilterSchema(Schema):
     order: str | None = None
     page: int = Field(1, ge=1)
     page_size: int = Field(10, ge=1, le=100)
+
+
+class WinRateOverTimePointSchema(Schema):
+    """One time-series point for win rate over time.
+
+    Attributes:
+        period: Canonical period id (e.g. 2024-W01, 2024-01, 2024).
+        period_label: Human-readable label for the X axis.
+        white_pct: Percentage of games won by white (0–100).
+        draw_pct: Percentage of drawn games (0–100).
+        black_pct: Percentage of games won by black (0–100).
+        game_count: Number of games in the period.
+    """
+
+    period: str
+    period_label: str
+    white_pct: float
+    draw_pct: float
+    black_pct: float
+    game_count: int
+
+
+class WinRateOverTimeResponseSchema(Schema):
+    """Response for win-rate-over-time endpoint.
+
+    Attributes:
+        items: Time-series points ordered by period ascending.
+    """
+
+    items: list[WinRateOverTimePointSchema]
+
+
+class WinRateOverTimeFilterSchema(Schema):
+    """Query parameters for win-rate-over-time.
+
+    period: week, month, or year (default week). Rest optional.
+    """
+
+    period: Literal["week", "month", "year"] = "week"
+    date_from: date | None = None
+    date_to: date | None = None
+    eco_code: str | None = None
+    opening_id: int | None = None
+    opening_name: str | None = None
+    any_player: str | None = None
+    white_player: str | None = None
+    black_player: str | None = None
+    white_elo_min: int | None = None
+    white_elo_max: int | None = None
+    black_elo_min: int | None = None
+    black_elo_max: int | None = None
+    min_games: int = 1

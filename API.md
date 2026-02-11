@@ -170,6 +170,52 @@ No game found for this opening (or invalid opening_id).
 curl http://localhost:8000/api/v1/openings/42/latest-game/
 ```
 
+### Win rate over time
+
+#### GET /api/v1/stats/win-rate-over-time/
+
+Returns time-series points of white/draw/black win percentages by period (week, month, or year). The X axis is derived from `Game.date`. Optional filters: date range, opening (ECO, opening_id, opening_name), player, ELO, and minimum games per period.
+
+**Query Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `period` | string | Time bucket: `week`, `month`, or `year`. Default: `week`. |
+| `date_from` | date | Only include games on or after this date (YYYY-MM-DD). |
+| `date_to` | date | Only include games on or before this date. |
+| `eco_code` | string | Only games with this opening ECO (e.g. B20). |
+| `opening_id` | integer | Only games with this opening (primary key). |
+| `opening_name` | string | Only games whose opening name contains this (case-insensitive). |
+| `any_player` | string | Only games where white or black player name contains this. |
+| `white_player` | string | Only games where white player name contains this. |
+| `black_player` | string | Only games where black player name contains this. |
+| `white_elo_min` / `white_elo_max` | integer | Filter by white ELO. |
+| `black_elo_min` / `black_elo_max` | integer | Filter by black ELO. |
+| `min_games` | integer | Only return periods with at least this many games (default: 1). |
+
+**Response (200)**
+
+```json
+{
+  "items": [
+    {
+      "period": "2024-W01",
+      "period_label": "Week of 01 Jan 2024",
+      "white_pct": 44.8,
+      "draw_pct": 27.3,
+      "black_pct": 27.9,
+      "game_count": 82
+    }
+  ]
+}
+```
+
+**Example Request**
+
+```bash
+curl "http://localhost:8000/api/v1/stats/win-rate-over-time/?period=week&date_from=2024-01-01&date_to=2024-01-31&eco_code=B20&min_games=10"
+```
+
 ## Error Responses
 
 ### 422 Unprocessable Entity
