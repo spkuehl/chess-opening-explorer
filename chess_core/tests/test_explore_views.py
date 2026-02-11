@@ -28,8 +28,9 @@ def test_explore_full_page_returns_200(client: Client, db: None) -> None:
     """GET /explore/ without params returns 200 and results container."""
     response = client.get("/explore/")
     assert response.status_code == 200
-    assert b"opening-stats-results" in response.content
+    assert b"explore-results" in response.content
     assert b"Explore openings" in response.content
+    assert b"win-rate-chart-wrapper" in response.content
 
 
 def test_explore_full_page_empty_state(client: Client, db: None) -> None:
@@ -43,7 +44,10 @@ def test_explore_full_page_with_data(
     client: Client, db: None, opening_with_games: Opening
 ) -> None:
     """Full page with data shows table and total."""
-    response = client.get("/explore/", {"threshold": "5"})
+    response = client.get(
+        "/explore/",
+        {"threshold": "5", "opening_threshold": "1"},
+    )
     assert response.status_code == 200
     assert b"Sicilian Defense" in response.content
     assert b"B20" in response.content
@@ -51,12 +55,13 @@ def test_explore_full_page_with_data(
 
 
 def test_explore_htmx_returns_partial_only(client: Client, db: None) -> None:
-    """Request with HX-Request returns only table partial, no full layout."""
+    """Request with HX-Request returns chart + table partial, no full layout."""
     response = client.get("/explore/", HTTP_HX_REQUEST="true")
     assert response.status_code == 200
     content = response.content.decode("utf-8")
-    assert "opening-stats-results" not in content
     assert "<html" not in content.lower()
+    assert "win-rate-chart-data" in content
+    assert "win-rate-chart-wrapper" in content
     assert "No openings match" in content or "Total:" in content
 
 
@@ -65,7 +70,9 @@ def test_explore_htmx_with_data_returns_table(
 ) -> None:
     """HTMX request with data returns table fragment."""
     response = client.get(
-        "/explore/", {"threshold": "5"}, HTTP_HX_REQUEST="true"
+        "/explore/",
+        {"threshold": "5", "opening_threshold": "1"},
+        HTTP_HX_REQUEST="true",
     )
     assert response.status_code == 200
     assert b"Sicilian Defense" in response.content

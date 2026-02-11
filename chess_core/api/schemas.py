@@ -140,7 +140,7 @@ class WinRateOverTimePointSchema(Schema):
 
     Attributes:
         period: Canonical period id (e.g. 2024-W01, 2024-01, 2024).
-        period_label: Human-readable label for the X axis.
+        period_label: Date stamp for the period (same as period, e.g. 2024-W01).
         white_pct: Percentage of games won by white (0–100).
         draw_pct: Percentage of drawn games (0–100).
         black_pct: Percentage of games won by black (0–100).

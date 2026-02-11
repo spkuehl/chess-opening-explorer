@@ -18,7 +18,7 @@
     method="get"
     action="{% url 'explore' %}"
     hx-get="{% url 'explore' %}"
-    hx-target="#opening-stats-results"
+    hx-target="#explore-results"
     hx-swap="innerHTML"
     hx-trigger="input delay:200ms from:form"
   >
@@ -50,7 +50,56 @@
   </form>
 </details>
 
-<div id="opening-stats-results">
-  {% include "partials/opening_stats_table.html" with stats=stats total=total sort_urls=sort_urls column_links=column_links current_sort_by=current_sort_by current_order=current_order pagination=pagination %}
+<div id="explore-results">
+  {% include "partials/explore_results.html" with chart_items=chart_items stats=stats total=total sort_urls=sort_urls column_links=column_links current_sort_by=current_sort_by current_order=current_order pagination=pagination %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+(function () {
+  function initWinRateChart() {
+    var dataEl = document.getElementById('win-rate-chart-data');
+    var canvas = document.getElementById('win-rate-chart');
+    if (!canvas || !dataEl) return;
+    var raw = dataEl.textContent;
+    var items = raw ? JSON.parse(raw) : [];
+    if (window.winRateChart && typeof window.winRateChart.destroy === 'function') {
+      window.winRateChart.destroy();
+      window.winRateChart = null;
+    }
+    if (!items || items.length === 0) return;
+    var labels = items.map(function (d) { return d.period_label; });
+    window.winRateChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'White wins', data: items.map(function (d) { return d.white_pct; }), borderColor: '#e5e7eb', backgroundColor: 'rgba(229, 231, 235, 0.5)', fill: true, stack: 'stack0' },
+          { label: 'Draws', data: items.map(function (d) { return d.draw_pct; }), borderColor: '#9ca3af', backgroundColor: 'rgba(156, 163, 175, 0.5)', fill: true, stack: 'stack0' },
+          { label: 'Black wins', data: items.map(function (d) { return d.black_pct; }), borderColor: '#374151', backgroundColor: 'rgba(55, 65, 81, 0.5)', fill: true, stack: 'stack0' }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, min: 0, max: 100 }
+        }
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWinRateChart);
+  } else {
+    initWinRateChart();
+  }
+  document.body.addEventListener('htmx:afterSwap', function (ev) {
+    if (ev.detail && ev.detail.target && ev.detail.target.id === 'explore-results') {
+      initWinRateChart();
+    }
+  });
+})();
+</script>
 {% endblock %}
