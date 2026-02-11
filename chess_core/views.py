@@ -1,6 +1,7 @@
 """Views for the HTMX explorer UI."""
 
 import re
+from datetime import date
 from urllib.parse import urlencode
 
 from django.shortcuts import get_object_or_404, render
@@ -13,6 +14,10 @@ from chess_core.services.opening_stats import (
     ALLOWED_SORT_FIELDS,
     OpeningStatsFilterParams,
     OpeningStatsService,
+)
+from chess_core.services.win_rate_over_time import (
+    WinRateOverTimeFilterParams,
+    get_win_rate_over_time,
 )
 
 RESULT_TOKENS = frozenset({"1-0", "0-1", "1/2-1/2", "*"})
@@ -67,6 +72,41 @@ def _get_params_from_request(request):
         return params, raw, None
     except ValidationError as e:
         return OpeningStatsFilterParams(), raw, e
+
+
+def _get_chart_params_from_request(request) -> WinRateOverTimeFilterParams:
+    """Build win-rate-over-time filter params from request.GET."""
+    get_dict = request.GET.dict()
+    period = get_dict.get("chart_period") or "week"
+    if period not in ("week", "month", "year"):
+        period = "week"
+    date_from = None
+    if get_dict.get("date_from"):
+        try:
+            date_from = date.fromisoformat(get_dict["date_from"])
+        except (ValueError, TypeError):
+            pass
+    date_to = None
+    if get_dict.get("date_to"):
+        try:
+            date_to = date.fromisoformat(get_dict["date_to"])
+        except (ValueError, TypeError):
+            pass
+    threshold_val = get_dict.get("threshold")
+    min_games = 1
+    if threshold_val is not None:
+        try:
+            min_games = max(1, int(threshold_val))
+        except (ValueError, TypeError):
+            pass
+    return WinRateOverTimeFilterParams(
+        period=period,
+        date_from=date_from,
+        date_to=date_to,
+        eco_code=get_dict.get("eco_code") or None,
+        opening_name=get_dict.get("opening_name") or None,
+        min_games=min_games,
+    )
 
 
 def _build_sort_urls(get_dict: dict) -> tuple[dict, dict, str, str]:
@@ -187,6 +227,8 @@ def explore_openings(request):
     get_dict = request.GET.dict()
     sort_urls, column_links, current_sort_by, current_order = _build_sort_urls(get_dict)
     pagination = _build_pagination(get_dict, total_count)
+    chart_params = _get_chart_params_from_request(request)
+    chart_items = get_win_rate_over_time(chart_params)
     partial_ctx = {
         "stats": stats,
         "total": total,
@@ -195,12 +237,13 @@ def explore_openings(request):
         "current_sort_by": current_sort_by,
         "current_order": current_order,
         "pagination": pagination,
+        "chart_items": chart_items,
     }
 
     if request.headers.get("HX-Request"):
         return render(
             request,
-            "partials/opening_stats_table.html",
+            "partials/explore_results.html",
             partial_ctx,
         )
     error_message = None
@@ -221,6 +264,7 @@ def explore_openings(request):
             "current_sort_by": current_sort_by,
             "current_order": current_order,
             "pagination": pagination,
+            "chart_items": chart_items,
         },
     )
 

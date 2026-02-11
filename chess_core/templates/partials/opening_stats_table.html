@@ -29,11 +29,11 @@
 <table class="opening-stats-table">
   <thead>
     <tr>
-      <th><a href="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-get="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.eco_code.indicator }} ECO</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.name.url }}" hx-get="{% url 'explore' %}{{ column_links.name.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.name.indicator }} Opening</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.game_count.url }}" hx-get="{% url 'explore' %}{{ column_links.game_count.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.game_count.indicator }} Games</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.results.url }}" hx-get="{% url 'explore' %}{{ column_links.results.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.results.indicator }} {{ column_links.results.label }}</a></th>
-      <th><a href="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-get="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.avg_moves.indicator }} Avg moves</a></th>
+      <th><a href="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-get="{% url 'explore' %}{{ column_links.eco_code.url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.eco_code.indicator }} ECO</a></th>
+      <th><a href="{% url 'explore' %}{{ column_links.name.url }}" hx-get="{% url 'explore' %}{{ column_links.name.url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.name.indicator }} Opening</a></th>
+      <th><a href="{% url 'explore' %}{{ column_links.game_count.url }}" hx-get="{% url 'explore' %}{{ column_links.game_count.url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.game_count.indicator }} Games</a></th>
+      <th><a href="{% url 'explore' %}{{ column_links.results.url }}" hx-get="{% url 'explore' %}{{ column_links.results.url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.results.indicator }} {{ column_links.results.label }}</a></th>
+      <th><a href="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-get="{% url 'explore' %}{{ column_links.avg_moves.url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">{{ column_links.avg_moves.indicator }} Avg moves</a></th>
     </tr>
   </thead>
   <tbody>
@@ -72,10 +72,10 @@
 <nav aria-label="Pagination">
   <p>Page {{ pagination.page }} of {{ pagination.total_pages }}.</p>
   {% if pagination.prev_url %}
-  <a href="{% url 'explore' %}{{ pagination.prev_url }}" hx-get="{% url 'explore' %}{{ pagination.prev_url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">Previous</a>
+  <a href="{% url 'explore' %}{{ pagination.prev_url }}" hx-get="{% url 'explore' %}{{ pagination.prev_url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">Previous</a>
   {% endif %}
   {% if pagination.next_url %}
-  <a href="{% url 'explore' %}{{ pagination.next_url }}" hx-get="{% url 'explore' %}{{ pagination.next_url }}" hx-target="#opening-stats-results" hx-swap="innerHTML" hx-push-url="true">Next</a>
+  <a href="{% url 'explore' %}{{ pagination.next_url }}" hx-get="{% url 'explore' %}{{ pagination.next_url }}" hx-target="#explore-results" hx-swap="innerHTML" hx-push-url="true">Next</a>
   {% endif %}
 </nav>
 {% endif %}
