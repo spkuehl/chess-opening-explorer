@@ -1,5 +1,9 @@
 """Tests for the HTMX explore openings view."""
 
+import json
+import re
+from datetime import date
+
 import pytest
 from django.test import Client
 
@@ -97,3 +101,44 @@ def test_explore_valid_filters_repopulate_form(
     assert response.status_code == 200
     assert b'value="B20"' in response.content
     assert b'value="5"' in response.content
+
+
+def test_explore_chart_respects_opening_threshold(client: Client, db: None) -> None:
+    """Chart data is filtered by opening_threshold from the filter form."""
+    opening = OpeningFactory(eco_code="B20", name="Sicilian", ply_count=1)
+    for _ in range(2):
+        GameFactory(
+            opening=opening,
+            date=date(2024, 1, 15),
+            result="1-0",
+        )
+    response_low = client.get(
+        "/explore/",
+        {
+            "opening_threshold": "1",
+            "date_from": "2024-01-01",
+            "date_to": "2024-01-31",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    assert response_low.status_code == 200
+    content = response_low.content.decode("utf-8")
+    match = re.search(
+        r'id="win-rate-chart-data"[^>]*>([\s\S]*?)</script>',
+        content,
+    )
+    assert match is not None
+    chart_data = json.loads(match.group(1))
+    assert len(chart_data) > 0
+
+    response_high = client.get(
+        "/explore/",
+        {
+            "opening_threshold": "5",
+            "date_from": "2024-01-01",
+            "date_to": "2024-01-31",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    assert response_high.status_code == 200
+    assert b"No data for the selected filters." in response_high.content

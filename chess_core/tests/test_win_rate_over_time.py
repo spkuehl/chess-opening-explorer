@@ -171,6 +171,34 @@ class TestGetWinRateOverTime:
         assert "2024-01" not in periods
         assert "2024-02" in periods
 
+    def test_opening_threshold_filters_by_ply_count(self, db: None) -> None:
+        """Only games whose opening has ply_count >= opening_threshold are included."""
+        opening_short = OpeningFactory(eco_code="A00", name="Short", ply_count=1)
+        opening_long = OpeningFactory(eco_code="C00", name="Long", ply_count=5)
+        for _ in range(3):
+            GameFactory(
+                opening=opening_short,
+                date=date(2024, 1, 15),
+                result="1-0",
+            )
+        for _ in range(2):
+            GameFactory(
+                opening=opening_long,
+                date=date(2024, 1, 16),
+                result="0-1",
+            )
+        params = WinRateOverTimeFilterParams(
+            period="month",
+            date_from=date(2024, 1, 1),
+            date_to=date(2024, 1, 31),
+            min_games=1,
+            opening_threshold=3,
+        )
+        items = get_win_rate_over_time(params)
+        jan = next((i for i in items if i["period"] == "2024-01"), None)
+        assert jan is not None
+        assert jan["game_count"] == 2
+
 
 @pytest.mark.django_db
 class TestWinRateOverTimeAPI:
@@ -228,3 +256,39 @@ class TestWinRateOverTimeAPI:
             {"period": "day"},
         )
         assert response.status_code == 422
+
+    def test_opening_threshold_query_param_filters_results(
+        self, api_client: Client, db: None
+    ) -> None:
+        """opening_threshold query param excludes games from short openings."""
+        opening_short = OpeningFactory(eco_code="A00", name="Short", ply_count=1)
+        opening_long = OpeningFactory(eco_code="C00", name="Long", ply_count=5)
+        for _ in range(3):
+            GameFactory(
+                opening=opening_short,
+                date=date(2024, 1, 15),
+                result="1-0",
+            )
+        for _ in range(2):
+            GameFactory(
+                opening=opening_long,
+                date=date(2024, 1, 16),
+                result="0-1",
+            )
+        response = api_client.get(
+            "/api/v1/stats/win-rate-over-time/",
+            {
+                "period": "month",
+                "date_from": "2024-01-01",
+                "date_to": "2024-01-31",
+                "opening_threshold": "3",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        jan = next(
+            (i for i in data["items"] if i["period"] == "2024-01"),
+            None,
+        )
+        assert jan is not None
+        assert jan["game_count"] == 2
