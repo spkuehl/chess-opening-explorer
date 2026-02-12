@@ -41,16 +41,20 @@ class WinRateOverTimeFilterParams:
 def _format_period(period_date: date, period_type: PeriodType) -> tuple[str, str]:
     """Return (period, period_label) for a truncated date.
 
-    Both are the same date stamp (e.g. 2025-W06, 2025-02, 2025).
+    period: stable id (ISO week, YYYY-MM, or YYYY). period_label: human-readable;
+    for week period this is the first day of the week (e.g. "Mon, 03 Feb").
     """
     if period_type == "week":
         iso = period_date.isocalendar()
         period = f"{iso[0]}-W{iso[1]:02d}"
+        period_label = period_date.strftime("%d %b")
     elif period_type == "month":
         period = period_date.strftime("%Y-%m")
+        period_label = period
     else:
         period = period_date.strftime("%Y")
-    return period, period
+        period_label = period
+    return period, period_label
 
 
 def get_win_rate_over_time(
