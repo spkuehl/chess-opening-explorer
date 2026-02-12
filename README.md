@@ -180,27 +180,44 @@ chess-explorer/
 ├── pyproject.toml
 ├── uv.lock
 ├── API.md                   # REST API documentation
+├── TESTCOVERAGE.md          # Test coverage notes
 ├── chess_explorer/          # Project settings
 │   ├── settings.py
 │   ├── urls.py
 │   ├── asgi.py
 │   └── wsgi.py
-├── flowcharts/              # Architecture diagrams
+├── images/                  # Screenshots and diagrams
+│   ├── architecture_overview_flow.png
+│   ├── opening_detection_flow.png
+│   ├── sample-ui.gif
+│   └── titled-tuesday-download-screenshot.png
 └── chess_core/              # Django app
     ├── models.py            # Game and Opening models
     ├── admin.py             # Admin interface
-    ├── views.py
-    ├── templates/           # HTMX explorer (base, explore, partials)
+    ├── apps.py
+    ├── views.py             # Explore + latest-game HTMX views
     ├── repositories.py      # GameRepository
     ├── api/                 # Django Ninja REST API (v1)
-    │   ├── router.py        # Endpoints (e.g. /openings/stats/)
+    │   ├── router.py        # Endpoints (openings/stats, win-rate-over-time, etc.)
     │   └── schemas.py       # Pydantic request/response schemas
     ├── parsers/
     │   ├── base.py          # GameParser protocol + GameData
     │   └── pgn.py           # PGN parser
     ├── services/
     │   ├── openings.py      # OpeningDetector service
-    │   └── opening_stats.py # Aggregated opening statistics
+    │   ├── opening_stats.py # Aggregated opening statistics
+    │   ├── latest_game.py   # Latest game per opening
+    │   └── win_rate_over_time.py  # Win rate over time (chart data)
+    ├── templates/           # HTMX explorer and latest-game
+    │   ├── base.html
+    │   ├── explore.html
+    │   ├── latest_game.html
+    │   └── partials/
+    │       ├── board_preview.html
+    │       ├── explore_results.html
+    │       ├── latest_game.html
+    │       ├── opening_stats_table.html
+    │       └── win_rate_over_time_chart.html
     ├── data/                # ECO opening data (JSON)
     │   ├── ecoA.json … ecoE.json
     │   └── eco_interpolated.json
@@ -211,6 +228,18 @@ chess-explorer/
     │   ├── detect_openings.py
     │   └── backfill_move_count.py
     └── tests/
+        ├── conftest.py
+        ├── factories.py
+        ├── test_commands.py
+        ├── test_explore_views.py
+        ├── test_latest_game.py
+        ├── test_models.py
+        ├── test_opening_stats_api.py
+        ├── test_opening_stats_service.py
+        ├── test_parsers.py
+        ├── test_repositories.py
+        ├── test_services.py
+        └── test_win_rate_over_time.py
 ```
 
 ## Adding New Formats

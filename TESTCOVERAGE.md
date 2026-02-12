@@ -9,7 +9,7 @@ The Chess Explorer project implements a comprehensive test suite using **pytest*
 3. **Risk-Based Coverage** - High-risk, high-impact components are thoroughly tested
 4. **Structural Coverage** - All code paths are executed
 
-**Current Status:** 140 tests passing with **99% code coverage**
+**Current Status:** 210 tests passing with **95% code coverage**
 
 ---
 
@@ -32,39 +32,53 @@ factory-boy = ">=3.3"       # Test data factories
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "chess_explorer.settings"
 python_files = ["test_*.py", "*_test.py"]
-addopts = "--cov=games --cov-report=term-missing"
-testpaths = ["games/tests"]
+addopts = "--cov=chess_core --cov-report=term-missing"
+testpaths = ["chess_core/tests"]
 ```
 
 ### Directory Structure
 
 ```
-games/
+chess_core/
 ├── tests/
-│   ├── __init__.py           # Test package
+│   ├── __init__.py
 │   ├── conftest.py           # Shared fixtures
-│   ├── factories.py          # Model factories (OpeningFactory, GameFactory)
-│   ├── test_models.py        # Model tests (24 tests)
-│   ├── test_parsers.py       # Parser tests (38 tests)
-│   ├── test_services.py      # OpeningDetector tests (26 tests)
-│   ├── test_repositories.py  # Repository tests (31 tests)
-│   └── test_commands.py      # Management command tests (21 tests)
+│   ├── factories.py          # OpeningFactory, GameFactory
+│   ├── test_models.py        # Model tests
+│   ├── test_parsers.py       # PGN parser tests
+│   ├── test_services.py      # OpeningDetector tests
+│   ├── test_repositories.py  # GameRepository tests
+│   ├── test_commands.py      # Management command tests
+│   ├── test_explore_views.py # Explore HTMX + chart view tests
+│   ├── test_latest_game.py   # Latest-game service, API, view tests
+│   ├── test_opening_stats_api.py    # Opening stats REST API tests
+│   ├── test_opening_stats_service.py # OpeningStatsService tests
+│   └── test_win_rate_over_time.py   # Win-rate-over-time service + API tests
 ```
 
 ---
 
 ## Coverage by Component
 
-| Component | Tests | Coverage | Status |
-|-----------|-------|----------|--------|
-| `models.py` | 24 | 100% | Complete |
-| `parsers/pgn.py` | 38 | 97% | Complete |
-| `services/openings.py` | 26 | 100% | Complete |
-| `repositories.py` | 31 | 100% | Complete |
-| `commands/detect_openings.py` | - | 100% | Complete |
-| `commands/import_games.py` | - | 95% | Complete |
-| `commands/load_openings.py` | - | 95% | Complete |
-| **Total** | **140** | **99%** | **Complete** |
+| Component | Coverage | Status |
+|-----------|----------|--------|
+| `models.py` | 100% | Complete |
+| `admin.py` | 100% | Complete |
+| `views.py` | 87% | Good |
+| `api/router.py` | 100% | Complete |
+| `api/schemas.py` | 100% | Complete |
+| `parsers/base.py` | 100% | Complete |
+| `parsers/pgn.py` | 97% | Complete |
+| `repositories.py` | 98% | Complete |
+| `services/openings.py` | 100% | Complete |
+| `services/opening_stats.py` | 94% | Complete |
+| `services/latest_game.py` | 100% | Complete |
+| `services/win_rate_over_time.py` | 85% | Good |
+| `commands/detect_openings.py` | 100% | Complete |
+| `commands/import_games.py` | 95% | Complete |
+| `commands/load_openings.py` | 95% | Complete |
+| `commands/backfill_move_count.py` | 0% | Not covered |
+| **Total (chess_core)** | **95%** | **Target met** |
 
 ---
 
@@ -100,6 +114,38 @@ Tests that verify each feature works as expected from a user perspective.
 | `test_load_openings_from_data_directory` | All ECO files loaded | `test_commands.py` |
 | `test_load_openings_handles_duplicates` | Duplicate FENs ignored | `test_commands.py` |
 | `test_load_openings_with_clear` | --clear flag works | `test_commands.py` |
+
+### Feature: Explore Openings (HTMX UI)
+
+| Test Case | Description | File |
+|-----------|-------------|------|
+| `test_explore_full_page_returns_200` | Full page has explore-results and chart wrapper | `test_explore_views.py` |
+| `test_explore_full_page_with_data` | Table and total with filters | `test_explore_views.py` |
+| `test_explore_htmx_returns_partial_only` | HX-Request returns chart + table partial | `test_explore_views.py` |
+| `test_explore_htmx_with_data_returns_table` | HTMX response includes table data | `test_explore_views.py` |
+| `test_explore_chart_respects_opening_threshold` | Chart filtered by opening_threshold | `test_explore_views.py` |
+
+### Feature: Latest Game per Opening
+
+| Test Case | Description | File |
+|-----------|-------------|------|
+| `test_htmx_returns_partial_with_game` | Latest game partial has players and result | `test_latest_game.py` |
+| `test_full_page_returns_html_with_game` | Full page render with game | `test_latest_game.py` |
+| `test_200_returns_latest_game_schema` | API returns latest game schema | `test_latest_game.py` |
+
+### Feature: Opening Stats API
+
+| Test Case | Description | File |
+|-----------|-------------|------|
+| API filter, sort, pagination tests | REST endpoint contract | `test_opening_stats_api.py` |
+
+### Feature: Win Rate Over Time
+
+| Test Case | Description | File |
+|-----------|-------------|------|
+| `test_monthly_aggregation_percentages` | Period aggregation correct | `test_win_rate_over_time.py` |
+| `test_opening_threshold_filters_by_ply_count` | opening_threshold filters results | `test_win_rate_over_time.py` |
+| `test_opening_threshold_query_param_filters_results` | API opening_threshold param | `test_win_rate_over_time.py` |
 
 ---
 
@@ -272,27 +318,27 @@ uv run pytest
 uv run pytest -v
 
 # Run specific test file
-uv run pytest games/tests/test_parsers.py
+uv run pytest chess_core/tests/test_parsers.py
 
 # Run specific test class
-uv run pytest games/tests/test_models.py::TestOpeningModel
+uv run pytest chess_core/tests/test_models.py::TestOpeningModel
 
 # Run specific test
-uv run pytest games/tests/test_parsers.py::TestPGNParserDateParsing::test_parse_date_valid
+uv run pytest chess_core/tests/test_parsers.py::TestPGNParserDateParsing::test_parse_date_valid
 ```
 
 ### Coverage Reports
 
 ```bash
 # Run with terminal coverage report
-uv run pytest --cov=games --cov-report=term-missing
+uv run pytest --cov=chess_core --cov-report=term-missing
 
 # Generate HTML coverage report
-uv run pytest --cov=games --cov-report=html
+uv run pytest --cov=chess_core --cov-report=html
 # Open htmlcov/index.html in browser
 
 # Run with both reports
-uv run pytest --cov=games --cov-report=term-missing --cov-report=html
+uv run pytest --cov=chess_core --cov-report=term-missing --cov-report=html
 ```
 
 ### Filtering Tests
@@ -399,7 +445,7 @@ class TestNewFeature:
 
 - **Minimum**: 90% statement coverage
 - **Target**: 95%+ statement coverage
-- **Current**: 99% statement coverage
+- **Current**: 95% statement coverage (210 tests)
 
 ### CI Integration
 
@@ -410,5 +456,5 @@ Tests are configured to run automatically. Ensure all tests pass before merging:
 uv run pytest --tb=short
 
 # Full CI check
-uv run ruff check . && uv run pytest --cov=games
+uv run ruff check . && uv run pytest --cov=chess_core
 ```
