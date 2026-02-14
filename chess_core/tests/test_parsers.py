@@ -3,28 +3,20 @@
 import tempfile
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from chess_core.parsers.base import GameData
 from chess_core.parsers.pgn import PGNParser
-from chess_core.services.openings import OpeningMatch
 
 
 class TestPGNParserInit:
     """Tests for PGNParser initialization."""
 
-    def test_init_without_detector(self):
-        """Parser initializes without opening detector."""
+    def test_init(self):
+        """Parser initializes with no arguments."""
         parser = PGNParser()
-        assert parser._opening_detector is None
-
-    def test_init_with_detector(self):
-        """Parser initializes with opening detector."""
-        mock_detector = MagicMock()
-        parser = PGNParser(opening_detector=mock_detector)
-        assert parser._opening_detector is mock_detector
+        assert parser is not None
 
 
 class TestPGNParserParse:
@@ -101,38 +93,6 @@ class TestPGNParserParse:
         games = list(parser.parse(str(temp_pgn_file)))
 
         assert len(games) == 1
-
-
-class TestPGNParserWithOpeningDetector:
-    """Tests for PGNParser with opening detection."""
-
-    def test_parse_with_detector_match(self, temp_pgn_file: Path):
-        """Parser uses detector and sets opening_fen when match found."""
-        mock_detector = MagicMock()
-        mock_detector.detect_opening.return_value = OpeningMatch(fen="test-fen", ply=5)
-
-        parser = PGNParser(opening_detector=mock_detector)
-        game = list(parser.parse(temp_pgn_file))[0]
-
-        assert game.opening_fen == "test-fen"
-        mock_detector.detect_opening.assert_called_once()
-
-    def test_parse_with_detector_no_match(self, temp_pgn_file: Path):
-        """Parser sets empty opening_fen when no match found."""
-        mock_detector = MagicMock()
-        mock_detector.detect_opening.return_value = None
-
-        parser = PGNParser(opening_detector=mock_detector)
-        game = list(parser.parse(temp_pgn_file))[0]
-
-        assert game.opening_fen == ""
-
-    def test_parse_without_detector(self, temp_pgn_file: Path):
-        """Parser without detector sets empty opening_fen."""
-        parser = PGNParser()
-        game = list(parser.parse(temp_pgn_file))[0]
-
-        assert game.opening_fen == ""
 
 
 class TestPGNParserDateParsing:

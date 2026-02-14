@@ -6,6 +6,7 @@ from ninja import NinjaAPI, Query
 
 from chess_core.api.schemas import (
     LatestGameSchema,
+    OpeningGameDetailsSchema,
     OpeningStatsFilterSchema,
     OpeningStatsResponse,
     OpeningStatsSchema,
@@ -14,6 +15,7 @@ from chess_core.api.schemas import (
     WinRateOverTimeResponseSchema,
 )
 from chess_core.services.latest_game import get_latest_game_for_opening
+from chess_core.services.opening_game_details import get_opening_game_details
 from chess_core.services.opening_stats import (
     OpeningStatsFilterParams,
     OpeningStatsService,
@@ -134,6 +136,27 @@ def get_latest_game_for_opening_endpoint(request, opening_id: int) -> LatestGame
         termination=game.termination or "",
         moves=game.moves,
     )
+
+
+@api.get(
+    "/openings/{opening_id}/game-details/",
+    response=OpeningGameDetailsSchema,
+    summary="Get opening game details",
+    description=(
+        "Returns aggregate game details for one opening: game counts, "
+        "win/draw/loss counts, and average move number when white wins and "
+        "when black wins. 404 if the opening has no games or is invalid."
+    ),
+    tags=["openings"],
+)
+def get_opening_game_details_endpoint(
+    request, opening_id: int
+) -> OpeningGameDetailsSchema:
+    """Get game detail aggregates for an opening by opening id."""
+    details = get_opening_game_details(opening_id)
+    if details is None:
+        raise Http404("No game details for this opening.")
+    return OpeningGameDetailsSchema(**details)
 
 
 @api.get(

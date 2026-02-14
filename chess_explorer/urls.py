@@ -19,7 +19,11 @@ from django.contrib import admin
 from django.urls import path
 
 from chess_core.api import api
-from chess_core.views import explore_openings, latest_game_for_opening
+from chess_core.views import (
+    explore_openings,
+    latest_game_for_opening,
+    opening_game_details,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -29,5 +33,10 @@ urlpatterns = [
         "openings/<int:opening_id>/latest-game/",
         latest_game_for_opening,
         name="opening_latest_game",
+    ),
+    path(
+        "openings/<int:opening_id>/details/",
+        opening_game_details,
+        name="opening_game_details",
     ),
 ]

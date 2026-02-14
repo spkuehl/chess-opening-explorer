@@ -1,9 +1,11 @@
-"""Tests for OpeningDetector service."""
+"""Tests for OpeningDetector and EndgameDetector services."""
 
 from unittest.mock import patch
 
 import pytest
 
+from chess_core.services.endgame import EndgameDetector, EndgameEntry
+from chess_core.services.move_parsing import parse_san_moves
 from chess_core.services.openings import OpeningDetector, OpeningMatch
 
 
@@ -38,6 +40,15 @@ class TestOpeningDetectorInit:
         """Detector handles empty database."""
         detector = OpeningDetector()
         assert isinstance(detector._fen_set, set)
+
+    def test_init_with_fen_set_skips_db(self):
+        """When fen_set is provided, no database query is performed."""
+        with patch("chess_core.services.openings.Opening") as mock_opening:
+            fen_set = {"fen1", "fen2"}
+            detector = OpeningDetector(fen_set=fen_set)
+
+            assert detector._fen_set == fen_set
+            mock_opening.objects.values_list.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -131,54 +142,35 @@ class TestOpeningDetectorDetect:
         assert result.ply == 5
 
 
-@pytest.mark.django_db
-class TestOpeningDetectorParseMoves:
-    """Tests for OpeningDetector._parse_moves method."""
+class TestParseSanMoves:
+    """Tests for shared parse_san_moves function."""
 
-    def test_parse_moves_with_numbers(self, sample_opening):
+    def test_parse_moves_with_numbers(self) -> None:
         """Parse moves with move numbers."""
-        detector = OpeningDetector()
-        result = detector._parse_moves("1. e4 e5 2. Nf3 Nc6")
+        assert parse_san_moves("1. e4 e5 2. Nf3 Nc6") == ["e4", "e5", "Nf3", "Nc6"]
 
-        assert result == ["e4", "e5", "Nf3", "Nc6"]
-
-    def test_parse_moves_without_numbers(self, sample_opening):
+    def test_parse_moves_without_numbers(self) -> None:
         """Parse moves without move numbers."""
-        detector = OpeningDetector()
-        result = detector._parse_moves("e4 e5 Nf3 Nc6")
+        assert parse_san_moves("e4 e5 Nf3 Nc6") == ["e4", "e5", "Nf3", "Nc6"]
 
-        assert result == ["e4", "e5", "Nf3", "Nc6"]
-
-    def test_parse_moves_with_result(self, sample_opening):
+    def test_parse_moves_with_result(self) -> None:
         """Filter out result markers."""
-        detector = OpeningDetector()
+        assert parse_san_moves("1. e4 e5 1-0") == ["e4", "e5"]
+        assert parse_san_moves("1. d4 d5 0-1") == ["d4", "d5"]
+        assert parse_san_moves("1. c4 1/2-1/2") == ["c4"]
+        assert parse_san_moves("1. e4 *") == ["e4"]
 
-        assert detector._parse_moves("1. e4 e5 1-0") == ["e4", "e5"]
-        assert detector._parse_moves("1. d4 d5 0-1") == ["d4", "d5"]
-        assert detector._parse_moves("1. c4 1/2-1/2") == ["c4"]
-        assert detector._parse_moves("1. e4 *") == ["e4"]
-
-    def test_parse_moves_empty(self, sample_opening):
+    def test_parse_moves_empty(self) -> None:
         """Parse empty string returns empty list."""
-        detector = OpeningDetector()
-        result = detector._parse_moves("")
+        assert parse_san_moves("") == []
 
-        assert result == []
-
-    def test_parse_moves_only_numbers(self, sample_opening):
+    def test_parse_moves_only_numbers(self) -> None:
         """Parse string with only move numbers returns empty list."""
-        detector = OpeningDetector()
-        result = detector._parse_moves("1. 2. 3.")
+        assert parse_san_moves("1. 2. 3.") == []
 
-        assert result == []
-
-    def test_parse_moves_with_ellipsis(self, sample_opening):
+    def test_parse_moves_with_ellipsis(self) -> None:
         """Parse moves with ellipsis notation (continuation)."""
-        detector = OpeningDetector()
-        # "1..." is a move number continuation
-        result = detector._parse_moves("1... e5 2. Nf3")
-
-        assert result == ["e5", "Nf3"]
+        assert parse_san_moves("1... e5 2. Nf3") == ["e5", "Nf3"]
 
 
 class TestOpeningDetectorMocked:
@@ -260,3 +252,50 @@ class TestOpeningDetectorIntegration:
         assert result is not None
         # Ply 4 is the last valid position (2... Nc6)
         assert result.ply == 4
+
+
+class TestEndgameEntry:
+    """Tests for EndgameEntry dataclass."""
+
+    def test_create_endgame_entry(self) -> None:
+        """EndgameEntry can be created with fen and ply."""
+        entry = EndgameEntry(fen="4k3/8/8/8/8/8/8/4K3 w - - 0 1", ply=42)
+        assert entry.fen == "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
+        assert entry.ply == 42
+
+    def test_endgame_entry_attributes(self) -> None:
+        """EndgameEntry has fen and ply attributes."""
+        entry = EndgameEntry(fen="test-fen", ply=1)
+        assert hasattr(entry, "fen")
+        assert hasattr(entry, "ply")
+
+
+class TestEndgameDetector:
+    """Tests for EndgameDetector."""
+
+    def test_detect_endgame_empty_moves_returns_none(self) -> None:
+        """Empty move string returns None."""
+        detector = EndgameDetector()
+        assert detector.detect_endgame("") is None
+
+    def test_detect_endgame_short_game_returns_none(self) -> None:
+        """Game that never enters endgame returns None."""
+        detector = EndgameDetector()
+        assert detector.detect_endgame("1. e4 e5 2. Nf3 Nc6 3. Bb5") is None
+
+    def test_detect_endgame_returns_first_ply_and_fen(self) -> None:
+        """When endgame is reached, returns first ply and FEN."""
+        detector = EndgameDetector()
+        with patch("chess_core.services.endgame.is_endgame") as mock_is_endgame:
+            # Return True on second call (after 1. e4 e5, ply 2)
+            mock_is_endgame.side_effect = [False, True]
+            result = detector.detect_endgame("1. e4 e5 2. Nf3")
+        assert result is not None
+        assert result.ply == 2
+        assert result.fen.startswith("rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR")
+
+    def test_detect_endgame_invalid_move_stops_parsing(self) -> None:
+        """Invalid move stops parsing; returns None if no endgame yet."""
+        detector = EndgameDetector()
+        result = detector.detect_endgame("1. e4 e5 2. Nf3 Nc6 3. Ke2")
+        assert result is None

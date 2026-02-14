@@ -72,9 +72,11 @@
         if (!isExpanding) return;
         nextRow.hidden = false;
         nextRow.removeAttribute('aria-hidden');
-        var latestWrap = nextRow.querySelector('.latest-game-wrap');
-        if (latestWrap && typeof htmx !== 'undefined') {
-          htmx.trigger(latestWrap, 'expand-reveal');
+        if (typeof htmx !== 'undefined') {
+          var detailsWrap = nextRow.querySelector('.opening-details-wrap');
+          if (detailsWrap) htmx.trigger(detailsWrap, 'expand-reveal');
+          var latestWrap = nextRow.querySelector('.latest-game-wrap');
+          if (latestWrap) htmx.trigger(latestWrap, 'expand-reveal');
         }
         var container = nextRow.querySelector('.opening-board');
         if (!container || !container.dataset.moves) return;

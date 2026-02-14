@@ -4,12 +4,14 @@ import re
 from datetime import date
 from urllib.parse import urlencode
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from pydantic import ValidationError
 
 from chess_core.api.schemas import OpeningStatsFilterSchema
 from chess_core.models import Opening
 from chess_core.services.latest_game import get_latest_game_for_opening
+from chess_core.services.opening_game_details import get_opening_game_details
 from chess_core.services.opening_stats import (
     ALLOWED_SORT_FIELDS,
     OpeningStatsFilterParams,
@@ -295,5 +297,24 @@ def latest_game_for_opening(request, opening_id: int):
     return render(
         request,
         "latest_game.html",
+        context,
+    )
+
+
+def opening_game_details(request, opening_id: int):
+    """Serve opening game details as HTMX partial only.
+
+    Returns the opening_game_details partial for HTMX requests. Returns 404
+    for non-HTMX requests (no standalone page). Returns 404 if the opening
+    does not exist.
+    """
+    opening = get_object_or_404(Opening, pk=opening_id)
+    if not request.headers.get("HX-Request"):
+        raise Http404("Opening details are only available via HTMX.")
+    details = get_opening_game_details(opening_id)
+    context = {"opening": opening, "details": details}
+    return render(
+        request,
+        "partials/opening_game_details.html",
         context,
     )

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import chess
 
 from chess_core.models import Opening
+from chess_core.services.move_parsing import parse_san_moves
 
 
 @dataclass
@@ -27,9 +28,17 @@ class OpeningDetector:
     then replays game moves to find the deepest matching opening position.
     """
 
-    def __init__(self) -> None:
-        """Load all Opening FENs into memory for fast lookup."""
-        self._fen_set: set[str] = set(Opening.objects.values_list("fen", flat=True))
+    def __init__(self, fen_set: set[str] | None = None) -> None:
+        """Load opening FENs for fast lookup.
+
+        When fen_set is provided, it is used as the set of known FENs and
+        no database query is performed (useful when reusing a repository-level
+        cache). When fen_set is None, FENs are loaded from the Opening table.
+        """
+        if fen_set is not None:
+            self._fen_set = fen_set
+        else:
+            self._fen_set = set(Opening.objects.values_list("fen", flat=True))
 
     def detect_opening(self, moves: str) -> OpeningMatch | None:
         """Detect the opening played in a game by its move string.
@@ -51,8 +60,7 @@ class OpeningDetector:
         last_match: OpeningMatch | None = None
         ply = 0
 
-        # Parse moves from the move string
-        parsed_moves = self._parse_moves(moves)
+        parsed_moves = parse_san_moves(moves)
 
         for move_san in parsed_moves:
             try:
@@ -67,30 +75,6 @@ class OpeningDetector:
                     last_match = OpeningMatch(fen=full_fen, ply=ply)
 
             except (chess.InvalidMoveError, chess.AmbiguousMoveError):
-                # Stop parsing if we encounter an invalid move
                 break
 
         return last_match
-
-    def _parse_moves(self, moves: str) -> list[str]:
-        """Parse a move string into individual SAN moves.
-
-        Args:
-            moves: A move string like "1. e4 e5 2. Nf3 Nc6" or "e4 e5 Nf3 Nc6".
-
-        Returns:
-            A list of SAN moves like ["e4", "e5", "Nf3", "Nc6"].
-        """
-        tokens = moves.split()
-        san_moves = []
-
-        for token in tokens:
-            # Skip move numbers (e.g., "1.", "2.", "1...")
-            if token.endswith(".") or token.replace(".", "").isdigit():
-                continue
-            # Skip result markers
-            if token in ("1-0", "0-1", "1/2-1/2", "*"):
-                continue
-            san_moves.append(token)
-
-        return san_moves

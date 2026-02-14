@@ -11,6 +11,7 @@ Note for getting data: Any PGN file will do, but you can download PGN games from
 
 - Import chess games from PGN files
 - Automatic opening detection using ECO (Encyclopedia of Chess Openings) classification
+- Endgame detection: when each game first reaches 6 or fewer pieces (stored as ply and FEN)
 - Store games in PostgreSQL (or SQLite for development)
 - Extensible parser architecture for adding new formats for data intake
 - Django admin interface for browsing games
@@ -32,6 +33,10 @@ Note for getting data: Any PGN file will do, but you can download PGN games from
 
 The explorer UI (including the opening board preview) is presentation-only: it consumes view context (e.g. `row.moves`) and does not introduce new backend responsibilities.
 
+## Opening and Endgame (Repository)
+
+Opening and endgame are both derived in the repository when games are saved. The parser only extracts raw data (headers, moves); the repository replays moves to detect opening (ECO match) and endgame (first position with 6 or fewer pieces), so all import paths stay consistent.
+
 ## Opening Detection
 
 Games are automatically classified using the Encyclopedia of Chess Openings (ECO) system. The detector replays each game's moves and matches positions against ~15,800 known opening positions.
@@ -39,7 +44,7 @@ Games are automatically classified using the Encyclopedia of Chess Openings (ECO
 ### How It Works
 
 1. ECO data is loaded from JSON files into the `Opening` table
-2. When importing games, each position is checked against known openings
+2. When saving games (import or single save), the repository detects opening from moves
 3. The deepest (most specific) matching opening is assigned to the game
 
 ![Opoening Detection Flow](images/opening_detection_flow.png)
@@ -64,8 +69,17 @@ class Opening(models.Model):
 
 class Game(models.Model):
     opening = models.ForeignKey(Opening)     # Detected opening
+    endgame_move_ply = models.IntegerField(null=True)   # Ply when endgame first reached
+    endgame_fen = models.CharField(null=True, max_length=100)  # FEN at that ply
     # ... other fields
 ```
+
+## Endgame Detection
+
+When each game first reaches an endgame (6 or fewer non-king pieces: knights, bishops, rooks, queens), that ply and position FEN are stored. This is computed in the repository at save time (same as opening detection).
+
+- **On import**: New games get `endgame_move_ply` and `endgame_fen` set automatically.
+- **Existing games**: Run `backfill_endgame` to fill null endgame fields for games already in the database.
 
 ## Installation
 
@@ -146,6 +160,18 @@ uv run python manage.py detect_openings --force
 uv run python manage.py detect_openings --batch-size 500
 ```
 
+### Backfill Endgame
+
+For games that already exist with null endgame fields:
+
+```bash
+# Detect endgame (ply and FEN) for games that don't have it
+uv run python manage.py backfill_endgame
+
+# Optional: batch size
+uv run python manage.py backfill_endgame --batch-size 500
+```
+
 ### Admin Interface
 
 ```bash
@@ -204,6 +230,7 @@ chess-explorer/
     │   ├── base.py          # GameParser protocol + GameData
     │   └── pgn.py           # PGN parser
     ├── services/
+    │   ├── endgame.py       # EndgameDetector (6-or-fewer-pieces threshold)
     │   ├── openings.py      # OpeningDetector service
     │   ├── opening_stats.py # Aggregated opening statistics
     │   ├── latest_game.py   # Latest game per opening
@@ -226,6 +253,7 @@ chess-explorer/
     │   ├── import_games.py
     │   ├── load_openings.py
     │   ├── detect_openings.py
+    │   ├── backfill_endgame.py
     │   └── backfill_move_count.py
     └── tests/
         ├── conftest.py

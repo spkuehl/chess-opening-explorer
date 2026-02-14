@@ -87,6 +87,40 @@ class OpeningStatsResponse(Schema):
     total: int
 
 
+class OpeningGameDetailsSchema(Schema):
+    """Response schema for one opening's game detail aggregates.
+
+    Attributes:
+        opening_id: Primary key of the opening.
+        eco_code: ECO classification code.
+        name: Opening name.
+        moves: Opening move sequence.
+        game_count: Number of games with this opening (with move_count_ply set).
+        white_wins: Number of games won by white.
+        draws: Number of drawn games.
+        black_wins: Number of games won by black.
+        avg_move_number_white_wins: Average full move number when white wins.
+        avg_move_number_black_wins: Average full move number when black wins.
+        games_reaching_endgame: Number of games that reach the endgame.
+        pct_reaches_endgame: Percentage of games that reach the endgame.
+        avg_move_number_endgame: Average full move number when endgame is reached.
+    """
+
+    opening_id: int
+    eco_code: str
+    name: str
+    moves: str
+    game_count: int
+    white_wins: int
+    draws: int
+    black_wins: int
+    avg_move_number_white_wins: float | None
+    avg_move_number_black_wins: float | None
+    games_reaching_endgame: int
+    pct_reaches_endgame: float
+    avg_move_number_endgame: float | None
+
+
 class OpeningStatsFilterSchema(Schema):
     """Query parameters for filtering opening statistics.
 

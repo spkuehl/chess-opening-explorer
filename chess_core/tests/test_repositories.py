@@ -1,12 +1,15 @@
 """Tests for GameRepository."""
 
 from datetime import date
+from unittest.mock import patch
 
 import pytest
 
 from chess_core.models import Game
 from chess_core.parsers.base import GameData
 from chess_core.repositories import GameRepository
+from chess_core.services import EndgameEntry
+from chess_core.services.openings import OpeningMatch
 
 from .factories import GameFactory, OpeningFactory
 
@@ -112,31 +115,41 @@ class TestGameRepositorySave:
 
         assert isinstance(result, Game)
 
-    def test_save_with_opening_fen(self):
-        """save() resolves opening_fen to opening_id."""
+    def test_save_with_opening_detected(self):
+        """save() detects opening from moves and sets opening_id."""
         opening = OpeningFactory()
-        repo = GameRepository()
-        game_data = make_game_data(opening_fen=opening.fen)
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = OpeningMatch(
+                fen=opening.fen, ply=6
+            )
+            repo = GameRepository()
+            game_data = make_game_data(source_id="opening-game")
 
-        game = repo.save(game_data)
+            game = repo.save(game_data)
 
         assert game.opening_id == opening.id
 
-    def test_save_with_unknown_opening_fen(self):
-        """save() sets opening to None if FEN not in cache."""
-        repo = GameRepository()
-        game_data = make_game_data(opening_fen="unknown-fen")
+    def test_save_with_opening_unknown_fen(self):
+        """save() sets opening to None when detected FEN not in cache."""
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = OpeningMatch(
+                fen="unknown-fen", ply=6
+            )
+            repo = GameRepository()
+            game_data = make_game_data(source_id="unknown-opening-game")
 
-        game = repo.save(game_data)
+            game = repo.save(game_data)
 
         assert game.opening is None
 
-    def test_save_with_empty_opening_fen(self):
-        """save() sets opening to None if opening_fen is empty."""
-        repo = GameRepository()
-        game_data = make_game_data(opening_fen="")
+    def test_save_with_no_opening_match(self):
+        """save() sets opening to None when no opening detected."""
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = None
+            repo = GameRepository()
+            game_data = make_game_data(source_id="no-opening-game")
 
-        game = repo.save(game_data)
+            game = repo.save(game_data)
 
         assert game.opening is None
 
@@ -273,15 +286,19 @@ class TestGameRepositorySaveBatch:
         assert Game.objects.count() == 3
 
     def test_save_batch_with_openings(self):
-        """save_batch() resolves opening_fen for all games."""
+        """save_batch() detects opening from moves for all games."""
         opening = OpeningFactory()
-        repo = GameRepository()
-        games = [
-            make_game_data(source_id="game-1", opening_fen=opening.fen),
-            make_game_data(source_id="game-2", opening_fen=opening.fen),
-        ]
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = OpeningMatch(
+                fen=opening.fen, ply=6
+            )
+            repo = GameRepository()
+            games = [
+                make_game_data(source_id="game-1"),
+                make_game_data(source_id="game-2"),
+            ]
 
-        repo.save_batch(games)
+            repo.save_batch(games)
 
         saved_games = Game.objects.all()
         assert all(g.opening_id == opening.id for g in saved_games)
@@ -339,21 +356,29 @@ class TestGameRepositoryOpeningCache:
         assert repo._opening_cache[opening2.fen] == opening2.id
 
     def test_cache_miss_returns_none(self):
-        """Unknown FEN returns None opening_id."""
-        repo = GameRepository()
-        game_data = make_game_data(opening_fen="unknown-fen")
+        """Detected FEN not in cache yields None opening_id."""
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = OpeningMatch(
+                fen="unknown-fen", ply=6
+            )
+            repo = GameRepository()
+            game_data = make_game_data()
 
-        fields = repo._to_model_fields(game_data)
+            fields = repo._to_model_fields(game_data)
 
         assert fields["opening_id"] is None
 
     def test_cache_hit_returns_id(self):
-        """Known FEN returns correct opening_id."""
+        """Detected FEN in cache yields correct opening_id."""
         opening = OpeningFactory()
-        repo = GameRepository()
-        game_data = make_game_data(opening_fen=opening.fen)
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = OpeningMatch(
+                fen=opening.fen, ply=6
+            )
+            repo = GameRepository()
+            game_data = make_game_data()
 
-        fields = repo._to_model_fields(game_data)
+            fields = repo._to_model_fields(game_data)
 
         assert fields["opening_id"] == opening.id
 
@@ -365,24 +390,27 @@ class TestGameRepositoryFieldMapping:
     def test_all_fields_mapped(self):
         """All GameData fields are mapped correctly."""
         opening = OpeningFactory()
-        repo = GameRepository()
-        game_data = make_game_data(
-            event="Test Event",
-            site="Test Site",
-            game_date=date(2024, 1, 15),
-            round_num="5",
-            white_player="Magnus",
-            black_player="Hikaru",
-            result="1-0",
-            white_elo=2850,
-            black_elo=2800,
-            time_control="3+0",
-            termination="Time forfeit",
-            moves="1. e4 e5",
-            opening_fen=opening.fen,
-        )
+        with patch("chess_core.repositories.OpeningDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_opening.return_value = OpeningMatch(
+                fen=opening.fen, ply=6
+            )
+            repo = GameRepository()
+            game_data = make_game_data(
+                event="Test Event",
+                site="Test Site",
+                game_date=date(2024, 1, 15),
+                round_num="5",
+                white_player="Magnus",
+                black_player="Hikaru",
+                result="1-0",
+                white_elo=2850,
+                black_elo=2800,
+                time_control="3+0",
+                termination="Time forfeit",
+                moves="1. e4 e5",
+            )
 
-        fields = repo._to_model_fields(game_data)
+            fields = repo._to_model_fields(game_data)
 
         assert fields["event"] == "Test Event"
         assert fields["site"] == "Test Site"
@@ -414,3 +442,37 @@ class TestGameRepositoryFieldMapping:
         assert fields["date"] is None
         assert fields["white_elo"] is None
         assert fields["black_elo"] is None
+
+
+@pytest.mark.django_db
+class TestGameRepositoryEndgameFields:
+    """Tests for endgame_move_ply and endgame_fen set on save/save_batch."""
+
+    def test_short_moves_leaves_endgame_fields_null(self):
+        """Game with short moves has null endgame_move_ply and endgame_fen."""
+        repo = GameRepository()
+        game_data = make_game_data(source_id="short-game", moves="1. e4 e5")
+
+        game = repo.save(game_data)
+
+        assert game.endgame_move_ply is None
+        assert game.endgame_fen is None
+
+    def test_game_reaching_endgame_sets_endgame_fields(self):
+        """When detect_endgame returns an entry, saved game has endgame fields set."""
+        entry = EndgameEntry(
+            fen="4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+            ply=42,
+        )
+        with patch("chess_core.repositories.EndgameDetector") as mock_detector_cls:
+            mock_detector_cls.return_value.detect_endgame.return_value = entry
+            repo = GameRepository()
+            game_data = make_game_data(
+                source_id="endgame-game",
+                moves="1. e4 e5",
+            )
+
+            game = repo.save(game_data)
+
+        assert game.endgame_move_ply == 42
+        assert game.endgame_fen == "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
