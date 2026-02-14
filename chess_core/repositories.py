@@ -31,6 +31,9 @@ class GameRepository:
         self._opening_cache: dict[str, int] = dict(
             Opening.objects.values_list("fen", "id")
         )
+        self._opening_detector = OpeningDetector(
+            fen_set=set(self._opening_cache.keys())
+        )
 
     def save(self, game_data: GameData) -> Game:
         """Save a single game, updating if source_id exists.
@@ -114,7 +117,7 @@ class GameRepository:
             Dictionary of field names to values for the Game model.
         """
         # Detect opening from moves and resolve FEN to Opening ID
-        match = OpeningDetector().detect_opening(game_data.moves)
+        match = self._opening_detector.detect_opening(game_data.moves)
         opening_id = self._opening_cache.get(match.fen) if match else None
 
         endgame_entry = EndgameDetector().detect_endgame(game_data.moves)

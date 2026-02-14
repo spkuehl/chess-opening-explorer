@@ -28,9 +28,17 @@ class OpeningDetector:
     then replays game moves to find the deepest matching opening position.
     """
 
-    def __init__(self) -> None:
-        """Load all Opening FENs into memory for fast lookup."""
-        self._fen_set: set[str] = set(Opening.objects.values_list("fen", flat=True))
+    def __init__(self, fen_set: set[str] | None = None) -> None:
+        """Load opening FENs for fast lookup.
+
+        When fen_set is provided, it is used as the set of known FENs and
+        no database query is performed (useful when reusing a repository-level
+        cache). When fen_set is None, FENs are loaded from the Opening table.
+        """
+        if fen_set is not None:
+            self._fen_set = fen_set
+        else:
+            self._fen_set = set(Opening.objects.values_list("fen", flat=True))
 
     def detect_opening(self, moves: str) -> OpeningMatch | None:
         """Detect the opening played in a game by its move string.

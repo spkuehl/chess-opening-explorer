@@ -41,6 +41,15 @@ class TestOpeningDetectorInit:
         detector = OpeningDetector()
         assert isinstance(detector._fen_set, set)
 
+    def test_init_with_fen_set_skips_db(self):
+        """When fen_set is provided, no database query is performed."""
+        with patch("chess_core.services.openings.Opening") as mock_opening:
+            fen_set = {"fen1", "fen2"}
+            detector = OpeningDetector(fen_set=fen_set)
+
+            assert detector._fen_set == fen_set
+            mock_opening.objects.values_list.assert_not_called()
+
 
 @pytest.mark.django_db
 class TestOpeningDetectorDetect:
