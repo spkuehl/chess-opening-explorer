@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import chess
 
 from chess_core.models import Opening
+from chess_core.services.move_parsing import parse_san_moves
 
 
 @dataclass
@@ -51,8 +52,7 @@ class OpeningDetector:
         last_match: OpeningMatch | None = None
         ply = 0
 
-        # Parse moves from the move string
-        parsed_moves = self._parse_moves(moves)
+        parsed_moves = parse_san_moves(moves)
 
         for move_san in parsed_moves:
             try:
@@ -67,30 +67,6 @@ class OpeningDetector:
                     last_match = OpeningMatch(fen=full_fen, ply=ply)
 
             except (chess.InvalidMoveError, chess.AmbiguousMoveError):
-                # Stop parsing if we encounter an invalid move
                 break
 
         return last_match
-
-    def _parse_moves(self, moves: str) -> list[str]:
-        """Parse a move string into individual SAN moves.
-
-        Args:
-            moves: A move string like "1. e4 e5 2. Nf3 Nc6" or "e4 e5 Nf3 Nc6".
-
-        Returns:
-            A list of SAN moves like ["e4", "e5", "Nf3", "Nc6"].
-        """
-        tokens = moves.split()
-        san_moves = []
-
-        for token in tokens:
-            # Skip move numbers (e.g., "1.", "2.", "1...")
-            if token.endswith(".") or token.replace(".", "").isdigit():
-                continue
-            # Skip result markers
-            if token in ("1-0", "0-1", "1/2-1/2", "*"):
-                continue
-            san_moves.append(token)
-
-        return san_moves
