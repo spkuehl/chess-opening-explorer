@@ -50,6 +50,8 @@ class Game(models.Model):
     raw_headers = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     move_count_ply = models.IntegerField(null=True, blank=True, db_index=True)
+    endgame_move_ply = models.IntegerField(null=True, blank=True)
+    endgame_fen = models.CharField(max_length=100, blank=True, null=True)
     opening = models.ForeignKey(
         Opening, null=True, blank=True, on_delete=models.SET_NULL, db_index=True
     )
