@@ -1,0 +1,13 @@
+<section aria-label="Opening game details">
+  <h2>{{ opening.eco_code }}: {{ opening.name }}</h2>
+  {% if details %}
+  <p><strong>Moves:</strong> {{ details.moves }}</p>
+  <p><strong>Games:</strong> {{ details.game_count }} (White wins: {{ details.white_wins }}, Draws: {{ details.draws }}, Black wins: {{ details.black_wins }})</p>
+  <p><strong>Average move number when White wins:</strong> {% if details.avg_move_number_white_wins is not None %}{{ details.avg_move_number_white_wins }}{% else %}—{% endif %}</p>
+  <p><strong>Average move number when Black wins:</strong> {% if details.avg_move_number_black_wins is not None %}{{ details.avg_move_number_black_wins }}{% else %}—{% endif %}</p>
+  <p><strong>Games reaching endgame:</strong> {{ details.games_reaching_endgame }}/{{ details.game_count }} ({{ details.pct_reaches_endgame }}%)</p>
+  <p><strong>Average move number when endgame is reached:</strong> {% if details.avg_move_number_endgame is not None %}{{ details.avg_move_number_endgame }}{% else %}—{% endif %}</p>
+  {% else %}
+  <p>No games for this opening.</p>
+  {% endif %}
+</section>
