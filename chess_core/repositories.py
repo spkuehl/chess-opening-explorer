@@ -9,6 +9,7 @@ from typing import Any
 
 from .models import Game, Opening
 from .parsers.base import GameData
+from .services import EndgameDetector, OpeningDetector
 
 
 class GameRepository:
@@ -112,10 +113,21 @@ class GameRepository:
         Returns:
             Dictionary of field names to values for the Game model.
         """
-        # Resolve opening FEN to Opening ID
-        opening_id = None
-        if game_data.opening_fen:
-            opening_id = self._opening_cache.get(game_data.opening_fen)
+        # Detect opening from moves and resolve FEN to Opening ID
+        match = OpeningDetector().detect_opening(game_data.moves)
+        opening_id = self._opening_cache.get(match.fen) if match else None
+
+        endgame_entry = EndgameDetector().detect_endgame(game_data.moves)
+        if endgame_entry is not None:
+            endgame_move_ply = endgame_entry.ply
+            endgame_fen = (
+                endgame_entry.fen[:100]
+                if len(endgame_entry.fen) > 100
+                else endgame_entry.fen
+            )
+        else:
+            endgame_move_ply = None
+            endgame_fen = None
 
         return {
             "event": game_data.event,
@@ -134,6 +146,8 @@ class GameRepository:
             "source_format": game_data.source_format,
             "raw_headers": game_data.raw_headers,
             "opening_id": opening_id,
+            "endgame_move_ply": endgame_move_ply,
+            "endgame_fen": endgame_fen,
         }
 
     def _count_moves(self, moves: str) -> int | None:
