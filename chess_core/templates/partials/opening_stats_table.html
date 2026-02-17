@@ -28,6 +28,16 @@
   .expandable-row-bottom { width: 100%; }
   .opening-details-wrap { min-width: 200px; }
   .latest-game-wrap { min-width: 200px; }
+  @media (prefers-color-scheme: light) {
+    .opening-stats-table,
+    .opening-stats-table thead th,
+    .opening-stats-table tbody td {
+      color: #000000;
+    }
+    .opening-stats-table a {
+      color: inherit;
+    }
+  }
 </style>
 <table class="opening-stats-table">
   <thead>

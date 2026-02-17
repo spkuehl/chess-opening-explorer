@@ -6,7 +6,13 @@
 <style>
   .form-filters { font-size: 0.85rem; }
 </style>
-<h1>Explore openings</h1>
+<div class="flex-shrink-0 flex items-center">
+  <h1
+      style="-webkit-text-fill-color: #94949493; -webkit-text-stroke: 1px rgba(59, 130, 246, 0.7); paint-order: stroke fill;"
+    >
+    Chess Opening Database Explorer
+  </h1>
+</div>
 
 {% if validation_error_message %}
 <p role="alert">Invalid filters: {{ validation_error_message }} Using defaults.</p>
@@ -71,6 +77,9 @@
     }
     if (!items || items.length === 0) return;
     var labels = items.map(function (d) { return d.period_label; });
+    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var blackBorder = isDark ? '#374151' : '#111827';
+    var blackBackground = isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(17, 24, 39, 0.7)';
     window.winRateChart = new Chart(canvas, {
       type: 'line',
       data: {
@@ -78,7 +87,7 @@
         datasets: [
           { label: 'White wins', data: items.map(function (d) { return d.white_pct; }), borderColor: '#e5e7eb', backgroundColor: 'rgba(229, 231, 235, 0.5)', fill: true, stack: 'stack0' },
           { label: 'Draws', data: items.map(function (d) { return d.draw_pct; }), borderColor: '#9ca3af', backgroundColor: 'rgba(156, 163, 175, 0.5)', fill: true, stack: 'stack0' },
-          { label: 'Black wins', data: items.map(function (d) { return d.black_pct; }), borderColor: '#374151', backgroundColor: 'rgba(55, 65, 81, 0.5)', fill: true, stack: 'stack0' }
+          { label: 'Black wins', data: items.map(function (d) { return d.black_pct; }), borderColor: blackBorder, backgroundColor: blackBackground, fill: true, stack: 'stack0' }
         ]
       },
       options: {
