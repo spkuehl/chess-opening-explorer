@@ -3,6 +3,10 @@
   {% if items %}
   <canvas id="win-rate-chart" width="400" height="100" aria-label="Win rate over time"></canvas>
   {% else %}
+  {% if message %}
+  <p>{{ message }}</p>
+  {% else %}
   <p>No data for the selected filters.</p>
+  {% endif %}
   {% endif %}
 </div>

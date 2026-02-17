@@ -238,6 +238,16 @@ def explore_openings(request):
     pagination = _build_pagination(get_dict, total_count)
     chart_params = _get_chart_params_from_request(request)
     chart_items = get_win_rate_over_time(chart_params)
+    chart_message = None
+    if chart_params.date_from is not None:
+        if not chart_params.date_to:
+            date_to = date.today()
+        else:
+            date_to = chart_params.date_to
+        span_days = (date_to - chart_params.date_from).days
+        if span_days < 14:
+            chart_items = []
+            chart_message = "Increase date range to generate historical chart."
     partial_ctx = {
         "stats": stats,
         "total": total,
@@ -247,6 +257,7 @@ def explore_openings(request):
         "current_order": current_order,
         "pagination": pagination,
         "chart_items": chart_items,
+        "chart_message": chart_message,
     }
 
     if request.headers.get("HX-Request"):
@@ -274,6 +285,7 @@ def explore_openings(request):
             "current_order": current_order,
             "pagination": pagination,
             "chart_items": chart_items,
+            "chart_message": chart_message,
         },
     )
 
